@@ -1,2 +1,1 @@
-# rusty ssh
-Tauri app to manage remote ssh servers
+# Tauri app to manage remote ssh servers
