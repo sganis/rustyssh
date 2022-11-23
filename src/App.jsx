@@ -6,7 +6,7 @@ function App() {
   const [server, setServer] = useState("");
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(true);
+  const [remember_me, setRemember_me] = useState(false);
 
   async function read_settings() {
     return await invoke("read_settings");
@@ -19,8 +19,15 @@ function App() {
         console.log(settings);
         setServer(settings.server);
         setUser(settings.user);
-        setPassword(settings.password);
-        setRememberMe(settings.remember_me);
+        console.log(settings.remember_me);
+        if (settings.remember_me) {
+          setPassword(settings.password);
+          setRemember_me(true);
+          console.log("remembered!");
+        } else {
+          setPassword("");
+          setRemember_me(false);
+        }
       } catch (e) {
         console.log(`Error: ${e}`);
       }
@@ -32,12 +39,13 @@ function App() {
     const settings = {
       server: server,
       user: user,
-      password: password,
-      remember_me: rememberMe,
+      password: remember_me ? password : "",
+      remember_me: remember_me,
     };
+    console.log(settings);
     await invoke("write_settings", { settings: settings });
-    const n = await invoke("increment", { n: 2 });
-    setNumber(n);
+    // const n = await invoke("increment", { n: 2 });
+    // setNumber(n);
   };
 
   return (
@@ -84,10 +92,10 @@ function App() {
         <div className="form-check">
           <input
             type="checkbox"
-            value={rememberMe}
+            checked={remember_me}
             className="form-check-input"
             id="rememberme"
-            onChange={(e) => setRememberMe(Boolean(e.target.value))}
+            onChange={() => setRemember_me(!remember_me)}
           />
           <label className="form-check-label">Remember me</label>
         </div>
