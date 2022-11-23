@@ -1,5 +1,5 @@
 [package]
-name = "eclapp"
+name = "rustissh"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]

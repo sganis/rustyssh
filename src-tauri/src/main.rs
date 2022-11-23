@@ -33,7 +33,7 @@ impl Default for Settings {
 
 #[tauri::command]
 fn read_settings() -> Result<Settings, String> {
-    let settings: Settings = match confy::load("eclapp", None) {
+    let settings: Settings = match confy::load("rustyssh", None) {
         Err(e) =>{
             println!("{:?}", e);
             return Err(e.to_string());
@@ -48,7 +48,7 @@ fn read_settings() -> Result<Settings, String> {
 #[tauri::command]
 fn write_settings(settings: Settings) -> Result<(), String> {
     println!("{:?}", settings);
-    match confy::store("eclapp",None, &settings) {
+    match confy::store("rustyssh",None, &settings) {
         Err(e) => {
             println!("{:?}", e);
             Err(e.to_string())
