@@ -1,29 +1,28 @@
 import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/tauri";
+import Files from "./Files";
+import Login from "./Login";
 
 function App() {
-  const [number, setNumber] = useState(0);
+  const [files, setFiles] = useState({});
+  const [currentPath, setCurrentPath] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const [server, setServer] = useState("");
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [remember_me, setRemember_me] = useState(false);
 
-  async function read_settings() {
-    return await invoke("read_settings");
-  }
-
   useEffect(() => {
     (async () => {
       try {
-        let settings = await read_settings();
+        let settings = await invoke("read_settings");
         console.log(settings);
         setServer(settings.server);
         setUser(settings.user);
-        console.log(settings.remember_me);
         if (settings.remember_me) {
           setPassword(settings.password);
           setRemember_me(true);
-          console.log("remembered!");
         } else {
           setPassword("");
           setRemember_me(false);
@@ -34,76 +33,99 @@ function App() {
     })();
   }, []);
 
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setIsConnecting(true);
+    //await sleep(1000);
     const settings = {
       server: server,
       user: user,
       password: remember_me ? password : "",
+      port: 22,
       remember_me: remember_me,
     };
     console.log(settings);
-    await invoke("write_settings", { settings: settings });
-    // const n = await invoke("increment", { n: 2 });
-    // setNumber(n);
+    try {
+      const r = await invoke("connect", { settings: settings });
+      setIsConnected(true);
+      await getFiles("/");
+    } catch (e) {
+      console.log(e);
+    }
+    setIsConnecting(false);
+  };
+
+  const getFiles = async (path) => {
+    try {
+      console.log("listing:" + path);
+      const r = await invoke("get_files", { path });
+      //console.log(r);
+      const jsfiles = JSON.parse(r);
+      setFiles(jsfiles);
+      setCurrentPath(path);
+      console.log(files);
+    } catch (e) {
+      console.log("error");
+    }
+  };
+
+  const goUp = async (path) => {
+    console.log(`go up: ${path}`);
+    const index = path.lastIndexOf("/") == 0 ? 1 : path.lastIndexOf("/");
+    const parent = path.substring(0, index);
+    console.log(parent);
+    await getFiles(parent);
+  };
+
+  const logout = async () => {
+    try {
+      const r = await invoke("disconnect");
+      setIsConnected(false);
+      console.log("disconnected");
+    } catch (e) {
+      console.log(e);
+    }
   };
 
   return (
-    <div className="container">
+    <div className="container-sm">
       <h1>
         <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        &nbsp;&nbsp;Login
+        &nbsp;SSH File Browser
       </h1>
-
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Server</label>
-          <input
-            type="text"
-            value={server}
-            className="form-control"
-            id="server"
-            placeholder="Enter remote ssh host name or IP address"
-            onChange={(e) => setServer(e.target.value)}
+      {!isConnected && (
+        <Login
+          isConnecting={isConnecting}
+          handleSubmit={handleSubmit}
+          server={server}
+          setServer={setServer}
+          user={user}
+          setuser={setUser}
+          password={password}
+          setPassword={setPassword}
+          remember_me={remember_me}
+          setRemember_me={setRemember_me}
+        />
+      )}
+      {isConnected && (
+        <div>
+          <p className="float-end">
+            <a href="#" onClick={logout}>
+              Logout
+            </a>
+          </p>
+          <Files
+            files={files}
+            handleRowClick={getFiles}
+            goUp={goUp}
+            currentPath={currentPath}
           />
         </div>
-        <div className="form-group">
-          <label>User</label>
-          <input
-            type="user"
-            value={user}
-            className="form-control"
-            id="user"
-            placeholder="Enter username"
-            onChange={(e) => setUser(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            className="form-control"
-            id="password"
-            placeholder="Password"
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <div className="form-check">
-          <input
-            type="checkbox"
-            checked={remember_me}
-            className="form-check-input"
-            id="rememberme"
-            onChange={() => setRemember_me(!remember_me)}
-          />
-          <label className="form-check-label">Remember me</label>
-        </div>
-        <button type="submit" className="btn btn-primary">
-          Submit
-        </button>
-      </form>
-      <p>{number}</p>
+      )}
     </div>
   );
 }
