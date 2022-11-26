@@ -104,7 +104,7 @@ function App() {
           server={server}
           setServer={setServer}
           user={user}
-          setuser={setUser}
+          setUser={setUser}
           password={password}
           setPassword={setPassword}
           remember_me={remember_me}
