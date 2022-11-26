@@ -10,6 +10,7 @@ use settings::Settings;
 use std::sync::Mutex;
 use tauri::State;
 use serde::{Deserialize, Serialize};
+use dirs;
 
 #[derive(Default)]
 struct App {
@@ -62,6 +63,39 @@ fn connect(settings: Settings, app: State<App>) -> Result<(), String> {
         }
     }   
 }
+
+#[tauri::command]
+fn connect_with_key(settings: Settings, app: State<App>) -> Result<(), String> {
+    let mut _ssh = ssh::Ssh::new();
+    let mut pkey = String::new();
+    if settings.private_key.is_empty() {
+        pkey = String::from(std::path::Path::new(
+            &dirs::home_dir().unwrap())
+            .join(".ssh").join("id_rsa").to_string_lossy()).clone();
+    }
+
+    match _ssh.connect_with_key(
+        settings.server.as_str(), 
+        settings.port, 
+        settings.user.as_str(), 
+        pkey.as_str()) {
+        Err(e) => {
+            Err(e)
+        },
+        
+        Ok(_) => {
+            write_settings(settings).expect("Cannot write settings");
+            let mut ssh = app.ssh.lock().unwrap();
+            *ssh = _ssh;
+            *app.connected.lock().unwrap() = true;
+            println!("Connected");
+            let output = ssh.run("whoami").unwrap();
+            println!("{}", output);
+            Ok(())
+        }
+    }   
+}
+
 
 #[tauri::command]
 fn disconnect(app: State<App>) -> Result<(), String> {
@@ -128,6 +162,7 @@ fn main() {
             read_settings,
             write_settings,
             connect,
+            connect_with_key,
             disconnect,
             ssh_run,
             get_files,

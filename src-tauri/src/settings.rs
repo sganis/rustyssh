@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use confy;
+use dirs;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Settings {
@@ -7,17 +8,22 @@ pub struct Settings {
     pub user: String,
     pub password: String,
     pub port: i16,
-    pub remember_me: bool,
+    pub private_key: String,
+    pub home_dir : String,
 }
 
 impl Default for Settings {
     fn default() -> Self { 
+        let home = String::from(dirs::home_dir().unwrap().to_string_lossy());
+        let pkey = String::from(std::path::Path::new(home.as_str()).join(".ssh").join("id_rsa").to_string_lossy());
         Self { 
             server: "localhost".into(),
             user: "support".into(),
-            password: "support".into(),
+            password: "".into(),
             port: 22,
-            remember_me: true,
+            home_dir : home,
+            private_key: pkey,
+            
         } 
     }
 }
@@ -36,9 +42,9 @@ pub fn read_settings() -> Result<Settings, String> {
 
 pub fn write_settings(settings: Settings) -> Result<(), String> {
     println!("{:?}", settings);
-    match confy::store("rustyssh",None, &settings) {
+    let s = Settings { password: "".into(), ..settings};
+    match confy::store("rustyssh",None, &s) {
         Err(e) => {
-            println!("{:?}", e);
             Err(e.to_string())
         },
         Ok(_) => Ok(()),

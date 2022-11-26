@@ -39,16 +39,7 @@ export default function Login(props) {
               onChange={(e) => props.setPassword(e.target.value)}
             />
           </div>
-          <div className="mb-3 form-check">
-            <input
-              type="checkbox"
-              checked={props.remember_me}
-              className="form-check-input"
-              id="rememberme"
-              onChange={() => props.setRemember_me(!remember_me)}
-            />
-            <label className="form-check-label">Remember me</label>
-          </div>
+
           <div className="mb-3">
             <button type="submit" className="btn btn-primary float-end">
               Connect
@@ -56,7 +47,6 @@ export default function Login(props) {
           </div>
         </fieldset>
       </form>
-      {props.isConnecting && <p>Connecting...</p>}
     </div>
   );
 }

@@ -6,11 +6,10 @@ use ssh2::Session;
 #[derive(Default)]
 pub struct Ssh {
     session : Option<Session>,
-    //busy : bool,
     host : String,
     user : String,
     password : String,
-    //pkey : String,
+    private_key : String,
 }
 
 impl Ssh {
@@ -41,6 +40,31 @@ impl Ssh {
         self.password = password.to_string();
         Ok(())
     }
+    pub fn connect_with_key(&mut self, host: &str, port: i16, user: &str, pkey: &str) 
+        -> Result<(), String> {
+        let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
+            Err(e) => return Err(e.to_string()),
+            Ok(o) => o,
+        };
+
+        let mut session = Session::new().unwrap();
+        session.set_tcp_stream(tcp);
+        if let Err(e) = session.handshake() {
+            return Err(e.to_string());
+        }
+        let private_key = std::path::Path::new(pkey);
+        if let Err(e) = session.userauth_pubkey_file(user, None, private_key, None) {
+            return Err(e.to_string());
+        }
+        assert!(session.authenticated());
+        self.session = Some(session);
+        self.host = host.to_string();
+        self.user = user.to_string();
+        self.private_key = String::from(private_key.as_os_str().to_string_lossy());
+        Ok(())
+    }
+
+
     pub fn disconnect(&mut self) -> Result<(), String> {
         if let Err(e) = self.session.as_ref().unwrap().disconnect(None,"",None) {
             return Err(e.to_string());

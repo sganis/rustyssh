@@ -11,24 +11,31 @@ function App() {
   const [server, setServer] = useState("");
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
-  const [remember_me, setRemember_me] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [needPassword, setNeedPassword] = useState(false);
 
   useEffect(() => {
     (async () => {
       try {
+        setMessage("Connecting...");
+        setIsConnecting(true);
         let settings = await invoke("read_settings");
-        console.log(settings);
         setServer(settings.server);
         setUser(settings.user);
-        if (settings.remember_me) {
-          setPassword(settings.password);
-          setRemember_me(true);
-        } else {
-          setPassword("");
-          setRemember_me(false);
+        try {
+          console.log(settings);
+          await invoke("connect_with_key", { settings });
+          setIsConnected(true);
+          setMessage("");
+          await getFiles("/");
+        } catch (e) {
+          setNeedPassword(true);
+          setIsConnecting(false);
+          setError(e);
         }
       } catch (e) {
-        console.log(`Error: ${e}`);
+        setError(`Error: ${e}`);
       }
     })();
   }, []);
@@ -40,21 +47,22 @@ function App() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsConnecting(true);
+    setError("");
     //await sleep(1000);
     const settings = {
       server: server,
       user: user,
-      password: remember_me ? password : "",
+      password: password,
       port: 22,
-      remember_me: remember_me,
     };
     console.log(settings);
     try {
-      const r = await invoke("connect", { settings: settings });
+      await invoke("connect", { settings: settings });
       setIsConnected(true);
       await getFiles("/");
     } catch (e) {
       console.log(e);
+      setError(e);
     }
     setIsConnecting(false);
   };
@@ -95,9 +103,9 @@ function App() {
     <div className="container-sm">
       <h1>
         <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        &nbsp;SSH File Browser
+        &nbsp;Rusty SSH
       </h1>
-      {!isConnected && (
+      {needPassword && !isConnected && (
         <Login
           isConnecting={isConnecting}
           handleSubmit={handleSubmit}
@@ -107,8 +115,7 @@ function App() {
           setUser={setUser}
           password={password}
           setPassword={setPassword}
-          remember_me={remember_me}
-          setRemember_me={setRemember_me}
+          error={error}
         />
       )}
       {isConnected && (
@@ -126,6 +133,11 @@ function App() {
           />
         </div>
       )}
+      <br />
+      <div>
+        {!error && message && <p className="alert alert-info">{message}</p>}
+        {error && <p className="alert alert-warning">{error}</p>}
+      </div>
     </div>
   );
 }
