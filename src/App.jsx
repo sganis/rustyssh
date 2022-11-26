@@ -54,6 +54,8 @@ function App() {
       user: user,
       password: password,
       port: 22,
+      private_key: "",
+      home_dir: "",
     };
     console.log(settings);
     try {
@@ -65,6 +67,7 @@ function App() {
       setError(e);
     }
     setIsConnecting(false);
+    setMessage("");
   };
 
   const getFiles = async (path) => {

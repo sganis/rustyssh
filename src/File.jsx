@@ -11,11 +11,11 @@ export default function File(props) {
   return (
     <tr onClick={() => props.handleClick(f.path)} style={{ cursor: "pointer" }}>
       <td width="50px">
-        <img src={f.filetype == "dir" ? folderIcon : fileIcon} width="32" />
+        <img src={f.filetype == "dir" ? folderIcon : fileIcon} width="28" />
       </td>
       <td>{f.name}</td>
       <td>{f.size}</td>
-      <td nowrap>{f.modified}</td>
+      <td>{f.modified}</td>
     </tr>
   );
 }
