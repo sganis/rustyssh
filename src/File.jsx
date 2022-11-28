@@ -14,8 +14,8 @@ export default function File(props) {
         <img src={f.filetype == "dir" ? folderIcon : fileIcon} width="28" />
       </td>
       <td>{f.name}</td>
-      <td>{f.size}</td>
-      <td>{f.modified}</td>
+      <td className="text-end text-nowrap">{f.size}</td>
+      <td className="text-end text-nowrap">{f.modified}</td>
     </tr>
   );
 }

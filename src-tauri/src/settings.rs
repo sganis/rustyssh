@@ -32,7 +32,7 @@ pub fn read_settings() -> Result<Settings, String> {
     let settings: Settings = match confy::load("rustyssh", None) {
         Err(e) =>{
             println!("{:?}", e);
-            return Err(e.to_string());
+            return Ok(Settings{..Default::default()});
         },
         Ok(settings)=> settings,
     };

@@ -23,20 +23,17 @@ function App() {
         let settings = await invoke("read_settings");
         setServer(settings.server);
         setUser(settings.user);
-        try {
-          console.log(settings);
-          await invoke("connect_with_key", { settings });
-          setIsConnected(true);
-          setMessage("");
-          await getFiles("/");
-        } catch (e) {
-          setNeedPassword(true);
-          setIsConnecting(false);
-          setError(e);
-        }
-      } catch (e) {
-        setError(`Error: ${e}`);
-      }
+        console.log(settings);
+        await invoke("connect_with_key", { settings });
+        setIsConnected(true);
+        setMessage("");
+        await getFiles("/");
+      } 
+      catch (e) {
+        setNeedPassword(true);
+        setIsConnecting(false);
+        setError(e.toString());
+      }      
     })();
   }, []);
 
@@ -103,7 +100,7 @@ function App() {
   };
 
   return (
-    <div className="container-sm">
+    <div className="d-flex flex-column vh-100 p-3 overflow-hidden">
       <h1>
         <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
         &nbsp;Rusty SSH
@@ -122,26 +119,28 @@ function App() {
         />
       )}
       {isConnected && (
-        <div>
-          <p className="float-end">
-            <a href="#" onClick={logout}>
+        <div className="h-100 overflow-hidden">
+          <div className="row">
+          <a href="#" onClick={logout}>
               Logout
             </a>
-          </p>
+         
+          </div>
           <Files
             files={files}
             handleRowClick={getFiles}
             goUp={goUp}
             currentPath={currentPath}
           />
+         
         </div>
       )}
       <br />
-      <div>
-        {!error && message && <p className="alert alert-info">{message}</p>}
-        {error && <p className="alert alert-warning">{error}</p>}
-      </div>
-    </div>
+      {/* <div>
+        {!error && message && <p className="">{message}</p>}
+        {error && <p className="">{error}</p>}
+      </div> */}
+    </div>    
   );
 }
 

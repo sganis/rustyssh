@@ -9,17 +9,17 @@ export default function Files(props) {
       ))
     : [];
   return (
-    <div>
+    <div className="h-100 ps-3 overflow-hidden">
       <div>
         <FileBar goUp={props.goUp} currentPath={props.currentPath} />
       </div>
-      <div>
+      <div className="h-100 overflow-auto">
         {files && (
           <table className="table table-hover">
             <tbody>{files}</tbody>
           </table>
         )}
-      </div>
+        </div>
     </div>
   );
 }

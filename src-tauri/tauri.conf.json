@@ -61,7 +61,7 @@
         "title": "Rusty SSH",
         "width": 500,
         "alwaysOnTop": true,
-        "x": -1250,
+        "x": 0,
         "y": 0
       }
     ]
