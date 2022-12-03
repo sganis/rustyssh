@@ -28,7 +28,7 @@ for:
       only:
         - image: Visual Studio 2019
     cache:
-      - %USERPROFILE%\.cargo
+      - C:\Users\appveyor\.cargo
     install:
       # install rust in windows
       - appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
