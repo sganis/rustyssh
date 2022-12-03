@@ -22,7 +22,7 @@ install:
   - sh: curl https://sh.rustup.rs -sSf | sh -s -- -y
   - sh: source "$HOME/.cargo/env"
   - sh: cargo -vV
-build:
+build_script:
   - yarn
   - yarn tauri build
 test: off
