@@ -9,6 +9,8 @@ platform:
 configuration:
   - Release
 clone_depth: 1
+environment:
+  nodejs_version: "16"
 for:
   - matrix:
       only:
@@ -33,8 +35,6 @@ for:
   - matrix:
       only:
         - image: macos
-    environment:
-      nodejs_version: "16"
     install:
       # install yarn and rust in linux/mac
       - npm install --global yarn
