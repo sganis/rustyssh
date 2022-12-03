@@ -2,4 +2,4 @@
 
 # Rusty SSH
 
-SSH client using Tauri
+SSH file browser using Tauri (Svelte/Rust)
