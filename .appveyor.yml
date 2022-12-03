@@ -1,0 +1,15 @@
+# rustyssh
+version: 1.0.{build}
+image:
+  - Visual Studio 2019
+  - Ubuntu
+  - macos
+platform:
+  - x64
+configuration:
+  - Release
+clone_depth: 1
+build_script:
+  - yarn
+  - yarn tauri build
+test: off
