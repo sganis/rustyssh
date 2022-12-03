@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/x6cc6xew8amyv3s6?svg=true)](https://ci.appveyor.com/project/sganis/rustyssh)
+[![Build status](https://ci.appveyor.com/api/projects/status/nsyia22f26ksikog?svg=true)](https://ci.appveyor.com/project/sganis/rustyssh)
 
 # Rusty SSH
 
