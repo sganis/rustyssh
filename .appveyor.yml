@@ -11,11 +11,11 @@ configuration:
 clone_depth: 1
 install:
   # install rust in windows
-  - ps: appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - ps: rustup-init -yv --default-toolchain %channel% --default-host %target%
-  - ps: set PATH=%PATH%;%USERPROFILE%\.cargo\bin
-  - ps: rustc -vV
-  - ps: cargo -vV
+  - cmd: appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - cmd: rustup-init -yv --default-toolchain %channel% --default-host %target%
+  - cmd: set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+  - cmd: rustc -vV
+  - cmd: cargo -vV
   # install yarn and rust in linux/mac
   - sh: npm install --global yarn
   - sh: curl https://sh.rustup.rs -sSf | sh -s -- -y
