@@ -19,6 +19,7 @@ install:
   # install yarn and rust in linux/mac
   - sh: npm install --global yarn
   - sh: curl https://sh.rustup.rs -sSf | sh -s -- -y
+  - sh: source "$HOME/.cargo/env"
 build_script:
   - yarn
   - yarn tauri build
