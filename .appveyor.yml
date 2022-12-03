@@ -16,7 +16,7 @@ for:
     install:
       # install yarn and rust in linux/mac
       - npm install --global yarn
-      - sudo apt-get install -y libsoup-2.4
+      - sudo apt-get install -y libsoup2.4-dev
       - curl https://sh.rustup.rs -sSf | sh -s -- -y
       - source "$HOME/.cargo/env"
       - cargo -vV
