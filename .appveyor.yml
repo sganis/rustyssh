@@ -2,7 +2,7 @@
 version: 1.0.{build}
 image:
   - Ubuntu
-  - macos
+  - macos-catalina
   - Visual Studio 2019
 platform:
   - x64
@@ -34,7 +34,7 @@ for:
       - cargo -vV
   - matrix:
       only:
-        - image: macos
+        - image: macos-catalina
     install:
       # install yarn and rust in linux/mac
       - npm install --global yarn
