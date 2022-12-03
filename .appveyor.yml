@@ -9,6 +9,12 @@ platform:
 configuration:
   - Release
 clone_depth: 1
+install:
+  - ps: appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - ps: rustup-init -yv --default-toolchain %channel% --default-host %target%
+  - ps: set PATH=%PATH%;%USERPROFILE%\.cargo\bin
+  - ps: rustc -vV
+  - ps: cargo -vV
 build_script:
   - yarn
   - yarn tauri build
