@@ -1,6 +1,11 @@
 [package]
+<<<<<<< HEAD
 name = "tauri-svelte"
 version = "0.0.0"
+=======
+name = "rustyssh"
+version = "1.0.0"
+>>>>>>> ff7b83911cd98ca7783d6ff2487ca0e6f7349103
 description = "A Tauri App"
 authors = ["you"]
 license = ""
@@ -8,7 +13,11 @@ repository = ""
 edition = "2021"
 rust-version = "1.57"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[source.crates-io]
+replace-with = "vendored-sources"
+
+[source.vendored-sources]
+directory = "../vendor/cargo"
 
 [build-dependencies]
 tauri-build = {version = "1.2", features = [] }
