@@ -113,8 +113,12 @@ fn ssh_run(command: String, app: State<App>) -> Result<String, String> {
 #[tauri::command]
 fn get_files(path: String, app: State<App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
-    match ssh.run(format!("ls -l --time-style=full-iso {} |grep -v total", path).as_str()) {
-        Err(e) => Err(e),
+    match ssh.run(format!("ls -l --time-style=full-iso {0} |grep '^d' && ls -l --time-style=full-iso {0} |grep -v total|grep -v '^d'", path).as_str()) {
+        Err(e) => if e.contains("Permission") {
+            Ok("{}".to_string())
+        } else {
+            Err(e)
+        },
         Ok(o) => {
             let mut files: Vec<File> = Vec::new();
             let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
@@ -123,30 +127,37 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
                 if items.len() < 9 {
                     continue;
                 }
-                let mut fullpath = format!("{}/{}",path, items[8]);
+                let filetype = match &items[0][0..1] {
+                    "-" => "REG",
+                    "d" => "DIR",
+                    "l" => "LINK",
+                    "c" => "CDEV",
+                    "b" => "BDEV",
+                    "s" => "SOCK",
+                    "p" => "PIPE",
+                    &_ => "UNKNOWN",
+                }.to_string();
+                let owner = items[2].clone();
+                // /dev has differen ls -l output
+                let mut size_index = 4;
+                let mut modified_index = 5;
+                let mut name_index = 8;
+                if items[4].contains(",") {
+                    size_index = 5;
+                    modified_index = 6;
+                    name_index = 9;
+                }
+                let size = items[size_index].parse::<u64>().unwrap();
+                let modified = items[modified_index].clone();
+                let name = items[name_index].clone();
+                let mut fullpath = format!("{}/{}",path, name);
                 if fullpath.starts_with("//") { 
                     fullpath = String::from(&fullpath[1..]);
                 }
-                let filetype = match &items[0][0..1] {
-                    "-" => "file",
-                    "d" => "dir",
-                    "l" => "link",
-                    "c" => "cdev",
-                    "b" => "bdev",
-                    "s" => "sock",
-                    "p" => "pipe",
-                    &_ => "unknown",
-                }.to_string();
-                
-                let file = File {
-                    name: items[8].clone(),
-                    filetype: filetype,
-                    size: items[4].parse::<u64>().unwrap(),
-                    owner: items[2].clone(),
-                    modified: items[5].clone(),
-                    path: fullpath,
-                    parent: path.clone(),
-                };
+                let path = fullpath;
+                let parent = path.clone();
+            
+                let file = File { name,filetype,size, owner, modified, path, parent };
                 println!("{:?}", file);
                 files.push(file);
             }            

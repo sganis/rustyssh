@@ -1,5 +1,5 @@
 [package]
-name = "rustyssh"
+name = "tauri-svelte"
 version = "0.0.0"
 description = "A Tauri App"
 authors = ["you"]
@@ -17,8 +17,8 @@ tauri-build = {version = "1.2", features = [] }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = {version = "1.2", features = ["api-all"] }
-confy = "0.5.1"
 ssh2 = "0.9.3"
+confy = "0.5.1"
 dirs = "4.0.0"
 
 [features]
