@@ -8,12 +8,6 @@ repository = ""
 edition = "2021"
 rust-version = "1.57"
 
-[source.crates-io]
-replace-with = "vendored-sources"
-
-[source.vendored-sources]
-directory = "../vendor/cargo"
-
 [build-dependencies]
 tauri-build = {version = "1.2", features = [] }
 
