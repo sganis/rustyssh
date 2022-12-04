@@ -1,17 +1,19 @@
 <script>
     import {createEventDispatcher} from 'svelte'
+    import {UserStore} from '../js/store'
+
     import Spinner from '$lib/Spinner.svelte'
     import { sleep } from '../js/util';
     const dispatch = createEventDispatcher();
 
     let server = 'localhost';
     let user = 'support';
-    let password = 'support';
-    let isConnecting = false;
+    let password = '';
     let message = "";
-
+    
     const handleSubmit = async () => {
-        isConnecting = true;
+      $UserStore.error = '';
+      $UserStore.isConnecting = true;
         message = "Connecting...";
         await sleep(1000);
         dispatch('login', {
@@ -28,7 +30,7 @@
           <input
             type="text"
             value={server}
-            disabled="{isConnecting}"
+            disabled="{$UserStore.isConnecting}"
             id="server"
             placeholder="Enter remote ssh host name or IP address"         
           />
@@ -36,7 +38,7 @@
           <input
             type="user"
             value={user}
-            disabled="{isConnecting}"
+            disabled="{$UserStore.isConnecting}"
             id="user"
             placeholder="Enter username"            
           />
@@ -44,26 +46,25 @@
           <input
             type="password"
             value={password}
-            disabled="{isConnecting}"
+            disabled="{$UserStore.isConnecting}"
             id="password"
             placeholder="Password"            
           />
           <div class="login-button">
           <div class="w100"></div>
           <button type="submit" 
-            disabled={isConnecting}>
+            disabled={$UserStore.isConnecting}>
             Connect
           </button>
           </div>
         
     </form>
     <div class="message">
-    {#if isConnecting}
+      {#if $UserStore.isConnecting}
         <Spinner/>
         {message}
-    {:else}
-        &nbsp;
-    {/if}
+      {/if}
+      {$UserStore.error}
     </div>
 </div>
 

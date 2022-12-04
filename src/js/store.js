@@ -5,4 +5,6 @@ export const UserStore = writable({
   user: "",
   server: "",
   isConnected: false,
+  isConnecting: false,
+  error: "",
 });

@@ -6,8 +6,6 @@ import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
 import Login from "./Login.svelte";
 
-let isConnected = false;
-let isConnecting = false;
 let error = "";
 let message = "";
 let currentPath = "";
@@ -31,7 +29,6 @@ const clearSelection = () =>{
 const handleLogin = async (e) => {
     let args = e.detail
     console.log(args)
-    isConnecting = true;
     error = "";
     const settings = {
       server: args.server,
@@ -51,11 +48,9 @@ const handleLogin = async (e) => {
       await getFiles("/");
     } catch (e) {
       console.log(e);
-      error = e.toString();
+      $UserStore.error = e.toString();
     }
-    isConnecting=false;
-    message = "";
-
+    $UserStore.isConnecting=false;
 }
 
   const getFiles = async (path) => {
@@ -96,7 +91,7 @@ const handleLogin = async (e) => {
     on:clear-selection={clearSelection} />
 {:else} 
 
-<Login on:login={handleLogin}/>
+<Login on:login={handleLogin} />
 
 
 {/if}
