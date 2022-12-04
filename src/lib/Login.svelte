@@ -23,48 +23,52 @@
 
 </script>
 
-
 <div class="full login-container">
     <form class="login" on:submit|preventDefault={handleSubmit} >
-          <label>Server</label>
+          <label for="server">Server</label>
           <input
             type="text"
-            value={server}
+            bind:value={server}
             disabled="{$UserStore.isConnecting}"
             id="server"
             placeholder="Enter remote ssh host name or IP address"         
           />
-          <label>User</label>
+          <label for="user">User</label>
           <input
             type="user"
-            value={user}
+            bind:value={user}
             disabled="{$UserStore.isConnecting}"
             id="user"
             placeholder="Enter username"            
           />
-          <label>Password</label>
+          <label for="password">Password</label>
           <input
             type="password"
-            value={password}
+            bind:value={password}
             disabled="{$UserStore.isConnecting}"
             id="password"
             placeholder="Password"            
           />
           <div class="login-button">
-          <div class="w100"></div>
-          <button type="submit" 
-            disabled={$UserStore.isConnecting}>
-            Connect
-          </button>
+            <div class="w100"></div>          
+            <button type="submit" 
+              disabled={$UserStore.isConnecting}>
+              Connect
+            </button>
           </div>
         
     </form>
-    <div class="message">
+    <br/>
+    <div class="message ">
       {#if $UserStore.isConnecting}
-        <Spinner/>
-        {message}
+      <div class="spinner">
+        <Spinner/> {message}
+      </div>
+      {:else}
+      <div class="error">
+        {$UserStore.error}
+      </div>
       {/if}
-      {$UserStore.error}
     </div>
 </div>
 
@@ -73,6 +77,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        padding-top: 20px
     }
     .login{
         width: 400px;
@@ -85,6 +90,7 @@
     .login-button {
         display: flex;
         justify-content: space-between;
+        padding-top: 10px;
     }
     input:disabled, button:disabled {
         pointer-events: none;
@@ -92,11 +98,18 @@
         background: #f5f5f5;
         border-color: #aaa;
     }
-    .message {
+    .spinner {
         display: flex;
         justify-content:flex-start;   
-        align-items: center;
+        align-items: center;        
         width: 400px; 
         gap: 10px;
+    }
+    .message {
+      width: 400px; 
+      height: 100%; 
+    }
+    .error {
+      color: red;
     }
   </style>

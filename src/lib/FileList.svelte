@@ -3,6 +3,8 @@ import {FileStore} from '../js/store'
 import {fade, scale} from 'svelte/transition'
 import File from "./File.svelte";
 import {getParent} from "../js/util"
+
+/** @type {string} */
 export let currentPath;
 
 $: parent = {
@@ -21,7 +23,8 @@ $: hasParent = currentPath !== "/";
     <File file={parent} on:file-click />
     {/if}
     {#each $FileStore as file(file.path)}
-    <div in:fade="{{duration:500}}" >
+    <!-- <div in:fade="{{duration:500}}" > -->
+    <div>
         <File {file} on:file-click on:clear-selection />
     </div>
     {/each}

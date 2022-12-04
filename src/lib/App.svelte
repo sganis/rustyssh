@@ -13,7 +13,7 @@ let currentPath = "";
 $: totalFiles = $FileStore.length
 
 
-const fileClick = async (e) => {
+const fileClick = async (/** @type {{ detail: any; }} */ e) => {
     const path = e.detail;
     console.log('here: ' + path.toString())
     await getFiles(path)
@@ -26,7 +26,7 @@ const clearSelection = () =>{
     // = [...files];
 }
 
-const handleLogin = async (e) => {
+const handleLogin = async (/** @type {{ detail: any; }} */ e) => {
     let args = e.detail
     console.log(args)
     error = "";
@@ -46,14 +46,14 @@ const handleLogin = async (e) => {
       $UserStore.isConnected = true;
       
       await getFiles("/");
-    } catch (e) {
-      console.log(e);
-      $UserStore.error = e.toString();
+    } catch (/** @type { ex: any; } */ ex) {
+      console.log(ex);
+      $UserStore.error = ex.toString();
     }
     $UserStore.isConnecting=false;
 }
 
-  const getFiles = async (path) => {
+  const getFiles = async (/** @type {string} */ path) => {
     try {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path });
@@ -68,20 +68,11 @@ const handleLogin = async (e) => {
     }
   };
 
-  const goUp = async (path) => {
+  const goUp = async (/** @type {string} */ path) => {
     let parent = getParent(path);
     await getFiles(parent);
   };
 
-  const logout = async () => {
-    try {
-      const r = await invoke("disconnect");
-      isConnected = false;
-      console.log("disconnected");
-    } catch (e) {
-      console.log(e);
-    }
-  };
 </script>
 
 {#if $UserStore.isConnected}
@@ -90,10 +81,7 @@ const handleLogin = async (e) => {
     on:file-click={fileClick}
     on:clear-selection={clearSelection} />
 {:else} 
-
 <Login on:login={handleLogin} />
-
-
 {/if}
 
 <style>
