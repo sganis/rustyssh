@@ -14,7 +14,7 @@ on: [push]
 #       - run: yarn tauri build
 
 jobs:
-  Matrix:
+  Build:
     strategy:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
@@ -23,6 +23,7 @@ jobs:
             in-linux: 1
     runs-on: ${{ matrix.os }}
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: 18
