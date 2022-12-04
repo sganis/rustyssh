@@ -13,7 +13,7 @@ let currentPath = "";
 $: totalFiles = $FileStore.length
 
 
-const fileClick = async (/** @type {{ detail: any; }} */ e) => {
+const fileClick = async (e) => {
     const path = e.detail;
     console.log('here: ' + path.toString())
     await getFiles(path)
@@ -26,7 +26,7 @@ const clearSelection = () =>{
     // = [...files];
 }
 
-const handleLogin = async (/** @type {{ detail: any; }} */ e) => {
+const handleLogin = async (e) => {
     let args = e.detail
     console.log(args)
     error = "";
@@ -46,14 +46,14 @@ const handleLogin = async (/** @type {{ detail: any; }} */ e) => {
       $UserStore.isConnected = true;
       
       await getFiles("/");
-    } catch (/** @type { ex: any; } */ ex) {
+    } catch (ex) {
       console.log(ex);
       $UserStore.error = ex.toString();
     }
     $UserStore.isConnecting=false;
 }
 
-  const getFiles = async (/** @type {string} */ path) => {
+  const getFiles = async (path) => {
     try {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path });
@@ -68,7 +68,7 @@ const handleLogin = async (/** @type {{ detail: any; }} */ e) => {
     }
   };
 
-  const goUp = async (/** @type {string} */ path) => {
+  const goUp = async (path) => {
     let parent = getParent(path);
     await getFiles(parent);
   };
