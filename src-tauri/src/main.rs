@@ -5,6 +5,7 @@
 
 mod settings;
 mod ssh;
+mod cmd;
 
 use settings::Settings;
 use std::sync::Mutex;

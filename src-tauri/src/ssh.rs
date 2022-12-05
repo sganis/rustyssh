@@ -1,8 +1,12 @@
+
+
 use std::io::Read;
 use std::net::TcpStream;
 use ssh2::Session;
 //use std::error::Error;
 use std::path::{Path, PathBuf};
+use std::process::{Command, Stdio};
+use super::cmd;
 
 #[derive(Default)]
 pub struct Ssh {
@@ -36,7 +40,19 @@ impl Ssh {
     fn generate_public_key() -> Result<(), String> {
         Ok(())
     }
-    fn generate_private_key() -> Result<(), String> {
+    fn generate_keys() -> Result<(), String> {
+        let seckey = Ssh::private_key_path();
+        let args = format!("/c \"echo y |C:/Windows/System32/OpenSSH/ssh-keygen.exe -m PEM -q -N \"\" -f {}\"", seckey.display());
+        println!("cmd: {args}");
+
+        let _r = match cmd::run("cmd", &args) {
+            Err(e) => Err(format!("Command failed: {}", e)),
+            Ok(o) =>{
+                println!("stdout here: {o}");
+                Ok(o)
+            }
+        };
+
         Ok(())
     }
     fn transfer_public_key() -> Result<(), String> {
@@ -47,7 +63,7 @@ impl Ssh {
     }
     fn setup_ssh() -> Result<(), String> {
         if !Ssh::has_private_key() {
-            if let Err(e) = Ssh::generate_private_key() {
+            if let Err(e) = Ssh::generate_keys() {
                 return Err(format!("Could not generate private key: {e}"));
             }
         }
@@ -204,4 +220,41 @@ mod tests {
     fn has_private_key() {
         assert!(Ssh::has_private_key());
     }
+    #[test]
+    fn generate_keys() {
+        let seckey = Ssh::private_key_path();
+        let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
+        let pubkey = Ssh::public_key_path();
+        let pubbak = PathBuf::from(pubkey.to_string_lossy().to_string() + ".bak");
+        
+        //assert!(Ssh::has_private_key());
+        //assert!(Ssh::has_public_key());
+        // backup keys
+        //std::fs::rename(&seckey, &secbak).unwrap();
+        //std::fs::rename(&pubkey, &pubbak).unwrap();
+        assert!(!Ssh::has_private_key());
+        assert!(!Ssh::has_public_key());
+        
+        assert!(Ssh::generate_keys().is_ok());
+        assert!(Ssh::has_private_key());
+        assert!(Ssh::has_public_key());
+        
+        // restore keys
+        // std::fs::rename(&secbak, &seckey).unwrap();
+        // std::fs::rename(&pubbak, &pubkey).unwrap();
+        // assert!(Ssh::has_private_key());
+        // assert!(Ssh::has_public_key());
+
+        // std::fs::remove_file(&secbak).unwrap();
+        // std::fs::remove_file(&pubbak).unwrap();
+        
+    }
+    #[test]
+    fn rc() {
+        let seckey = Ssh::private_key_path();
+        let args = format!("/c echo y |ssh-keygen.exe -m PEM -q -N \"\" -f {}", seckey.display());
+        let e = cmd::run("cmd", &args).err().unwrap();
+        println!("error: {e}");
+    }
+
 }
