@@ -1,12 +1,9 @@
 <script>
-export let totalFiles = 1110;
+export let totalFiles = 0;
 export let currentPath = "/";
 
 const handleClick = () => {
     console.log('clicked')
-}
-const handleClickArgs = (name) => {
-    console.log(`clicked ${name}`)
 }
 
 </script>

@@ -2,10 +2,12 @@
 import {FileStore} from '../js/store'
 import {fade, scale} from 'svelte/transition'
 import File from "./File.svelte";
+import Error from "./Error.svelte";
 import {getParent} from "../js/util"
 
 /** @type {string} */
 export let currentPath;
+export let error = "";
 
 $: parent = {
     path: getParent(currentPath),
@@ -24,10 +26,11 @@ $: hasParent = currentPath !== "/";
     {/if}
     {#each $FileStore as file(file.path)}
     <!-- <div in:fade="{{duration:500}}" > -->
-    <div>
-        <File {file} on:file-click on:clear-selection />
-    </div>
+    <File {file} on:file-click on:clear-selection />
     {/each}
+    {#if error}
+    <Error {error} />
+    {/if}
 </div>
 <style>
 .scrollable {

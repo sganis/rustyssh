@@ -27,6 +27,7 @@ struct File {
     modified: String,
     path: String,
     parent: String,
+    link: String,
 }
 
 #[tauri::command]
@@ -113,12 +114,9 @@ fn ssh_run(command: String, app: State<App>) -> Result<String, String> {
 #[tauri::command]
 fn get_files(path: String, app: State<App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
-    match ssh.run(format!("ls -l --time-style=full-iso {0} |grep '^d' && ls -l --time-style=full-iso {0} |grep -v total|grep -v '^d'", path).as_str()) {
-        Err(e) => if e.contains("Permission") {
-            Ok("{}".to_string())
-        } else {
-            Err(e)
-        },
+    let cmd = format!("sh -c \"ls -l --time-style=full-iso {0}|grep '^d'; ls -l --time-style=full-iso {0} |grep -v total|grep -v '^d'\"", path);
+    match ssh.run(&cmd) {
+        Err(e) => Err(e),
         Ok(o) => {
             let mut files: Vec<File> = Vec::new();
             let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
@@ -142,22 +140,32 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
                 let mut size_index = 4;
                 let mut modified_index = 5;
                 let mut name_index = 8;
+                let mut link_index = 10;
+
                 if items[4].contains(",") {
                     size_index = 5;
                     modified_index = 6;
                     name_index = 9;
+                    link_index = 12;
                 }
+                
                 let size = items[size_index].parse::<u64>().unwrap();
-                let modified = items[modified_index].clone();
+                let modified = items[modified_index].clone();                
                 let name = items[name_index].clone();
                 let mut fullpath = format!("{}/{}",path, name);
+
                 if fullpath.starts_with("//") { 
                     fullpath = String::from(&fullpath[1..]);
                 }
                 let path = fullpath;
                 let parent = path.clone();
             
-                let file = File { name,filetype,size, owner, modified, path, parent };
+                let link = match filetype.as_str() {
+                    "LINK" => items[link_index].clone(),
+                    &_ => "".to_string(),
+                };
+
+                let file = File { name,filetype,size, owner, modified, path, parent, link };
                 println!("{:?}", file);
                 files.push(file);
             }            

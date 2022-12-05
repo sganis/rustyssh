@@ -54,30 +54,28 @@ const handleLogin = async (e) => {
 }
 
   const getFiles = async (path) => {
+    error = "";
+    currentPath = path;
+    console.log('currentPath',currentPath);
     try {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path });
-      //console.log(r);
       const js = JSON.parse(r);
       console.log(js)
-      $FileStore = Object.keys(js).length !== 0 ? [...js] : [];
-      currentPath = path;
-      console.log('currentPath',currentPath);
+      $FileStore = Object.keys(js).length !== 0 ? [...js] : [];      
     } catch (e) {
       console.log(e);
+      error = e.toString();
+      $FileStore = [];      
     }
-  };
-
-  const goUp = async (path) => {
-    let parent = getParent(path);
-    await getFiles(parent);
   };
 
 </script>
 
+
 {#if $UserStore.isConnected}
 <FileBar {totalFiles} {currentPath} />
-<FileList {currentPath}
+<FileList {currentPath} {error}
     on:file-click={fileClick}
     on:clear-selection={clearSelection} />
 {:else} 
