@@ -2,6 +2,7 @@ use std::io::Read;
 use std::net::TcpStream;
 use ssh2::Session;
 //use std::error::Error;
+use std::path::{Path, PathBuf};
 
 #[derive(Default)]
 pub struct Ssh {
@@ -16,7 +17,60 @@ impl Ssh {
     pub fn new() -> Self {
         Self { ..Default::default() }
     }
-    pub fn connect(&mut self, host: &str, port: i16, user: &str, password: &str) 
+    pub fn private_key_path() -> PathBuf {
+        let home = dirs::home_dir().unwrap();
+        let prikey = Path::new(&home).join(".ssh").join("id_rsa");
+        PathBuf::from(&prikey)
+    }
+    pub fn public_key_path() -> PathBuf {
+        let home = dirs::home_dir().unwrap();
+        let pubkey = Path::new(&home).join(".ssh").join("id_rsa.pub");
+        PathBuf::from(&pubkey)
+    }    
+    pub fn has_private_key() -> bool {     
+        Path::new(&Ssh::private_key_path()).exists()
+    }
+    pub fn has_public_key() -> bool {      
+        Path::new(&Ssh::public_key_path()).exists()
+    }
+    fn generate_public_key() -> Result<(), String> {
+        Ok(())
+    }
+    fn generate_private_key() -> Result<(), String> {
+        Ok(())
+    }
+    fn transfer_public_key() -> Result<(), String> {
+        Ok(())
+    }
+    fn test_ssh() -> Result<(), String> {
+        Ok(())
+    }
+    fn setup_ssh() -> Result<(), String> {
+        if !Ssh::has_private_key() {
+            if let Err(e) = Ssh::generate_private_key() {
+                return Err(format!("Could not generate private key: {e}"));
+            }
+        }
+        let prikey = Ssh::private_key_path();
+        let pubkey = Ssh::public_key_path();
+
+        if !Ssh::has_public_key() {
+            if let Err(e) = Ssh::generate_public_key() {
+                return Err(format!("Could not generate public key: {e}"));
+            }         
+        }
+        if Ssh::test_ssh().is_err() {
+            if let Err(e) = Ssh::transfer_public_key() {
+                return Err(format!("Could not transfer public key: {e}"));
+            }
+            if let Err(e) = Ssh::test_ssh() {
+                return Err(format!("Test ssh failed: {e}"));
+            }
+        }
+        Ok(())
+    }
+    
+    pub fn connect_with_password(&mut self, host: &str, port: i16, user: &str, password: &str) 
         -> Result<(), String> {
         let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
             Err(e) => {
@@ -85,6 +139,7 @@ impl Ssh {
         }
         Ok(())
     }
+    
     pub fn run(&mut self, cmd: &str) -> Result<String, String> {
         println!("running CMD: {}", cmd);
         let mut channel = match self.session.as_ref().unwrap().channel_session() {
@@ -107,12 +162,46 @@ impl Ssh {
 #[cfg(test)]
 mod tests {
     use super::*;
+    const USER: &str = "support";
+    const PASS: &str = "support";
+    const HOST: &str = "localhost";
+    const PKEY: &str = "C:/users/san/.ssh/id_rsa_pem";
+    const PORT: i16 = 22;
+
     #[test]
-    fn whoami() {
+    fn connect_with_password() {
         let mut ssh = Ssh::new();
-        ssh.connect("localhost", 22, "support", "support").unwrap();
+        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        assert!(r.is_ok());
+    }
+    #[test]
+    fn connect_with_password_wrong() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_password(HOST, PORT, USER, "wrong");
+        assert!(r.is_err());
+    }
+    #[test]
+    fn connect_with_key() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_key(HOST, PORT, USER, PKEY);
+        assert!(r.is_ok());
+    }
+    #[test]
+    fn connect_with_key_wrong() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_key(HOST, PORT, USER, "/invalid/key");
+        assert!(r.is_err());
+    }
+    #[test]
+    fn run_command() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_key(HOST, PORT, USER, PKEY);
+        assert!(r.is_ok());
         let output = ssh.run("whoami").unwrap();
-        print!("{}", output);
         assert_eq!("support", output.as_str());
+    }
+    #[test]
+    fn has_private_key() {
+        assert!(Ssh::has_private_key());
     }
 }

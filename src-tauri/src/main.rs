@@ -44,7 +44,7 @@ fn write_settings(settings: Settings) -> Result<(), String> {
 #[tauri::command]
 fn connect_with_password(settings: Settings, app: State<App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();
-    match _ssh.connect(
+    match _ssh.connect_with_password(
         settings.server.as_str(), 
         settings.port, 
         settings.user.as_str(), 
@@ -69,9 +69,13 @@ fn connect_with_password(settings: Settings, app: State<App>) -> Result<(), Stri
 fn connect_with_key(settings: Settings, app: State<App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();
     let mut pkey = String::new();
+    
+    // if Ssh::has_private_key() {
+    //     pkey = String::from(Ssh::private_key_path().to_string_lossy());
+    // } 
+
     if settings.private_key.is_empty() {
-        pkey = String::from(std::path::Path::new(
-            &dirs::home_dir().unwrap())
+        pkey = String::from(std::path::Path::new(&dirs::home_dir().unwrap())
             .join(".ssh").join("id_rsa_pem").to_string_lossy()).clone();
     }
 
