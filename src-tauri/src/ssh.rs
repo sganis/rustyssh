@@ -19,16 +19,23 @@ impl Ssh {
     pub fn connect(&mut self, host: &str, port: i16, user: &str, password: &str) 
         -> Result<(), String> {
         let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
-            Err(e) => return Err(e.to_string()),
+            Err(e) => {
+                println!("tcp error: {}", e.to_string());
+                return Err(e.to_string())
+            },
             Ok(o) => o,
         };
 
         let mut session = Session::new().unwrap();
         session.set_tcp_stream(tcp);
         if let Err(e) = session.handshake() {
+            println!("handshake error: {}", e.to_string());
+                
             return Err(e.to_string());
         }
         if let Err(e) = session.userauth_password(user, password) {
+            println!("authentication error: {}", e.to_string());
+                
             return Err(e.to_string());
         }
         //let pkey = std::path::Path::new("c:\\users\\san\\.ssh\\id_rsa");
@@ -43,18 +50,25 @@ impl Ssh {
     pub fn connect_with_key(&mut self, host: &str, port: i16, user: &str, pkey: &str) 
         -> Result<(), String> {
         let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
-            Err(e) => return Err(e.to_string()),
+            Err(e) => {
+                println!("tcp error: {}", e.to_string());
+                return Err(e.to_string());
+            },
             Ok(o) => o,
         };
 
         let mut session = Session::new().unwrap();
         session.set_tcp_stream(tcp);
         if let Err(e) = session.handshake() {
+            println!("handshake error: {}", e.to_string());              
             return Err(e.to_string());
         }
         let private_key = std::path::Path::new(pkey);
+        println!("pkey: {}", private_key.display());
         if let Err(e) = session.userauth_pubkey_file(user, None, private_key, None) {
-            return Err(e.to_string());
+            println!("key auth error, user: {}, server: {} error: {}",
+                 user, host, e.to_string());
+            return Err("SSH key authentication failed".to_string());
         }
         assert!(session.authenticated());
         self.session = Some(session);

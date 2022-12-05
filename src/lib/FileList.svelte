@@ -1,23 +1,22 @@
 <script>
-import {FileStore} from '../js/store'
-import {fade, scale} from 'svelte/transition'
+import {FileStore,CurrentPath} from '../js/store'
+//import {fade, scale} from 'svelte/transition'
 import File from "./File.svelte";
 import Error from "./Error.svelte";
 import {getParent} from "../js/util"
 
 /** @type {string} */
-export let currentPath;
 export let error = "";
 
 $: parent = {
-    path: getParent(currentPath),
+    path: getParent($CurrentPath),
     name: '..',
     filetype: 'DIR',
     size: 0,
     modified: 0,
     selected: false,
 };
-$: hasParent = currentPath !== "/";
+$: hasParent = $CurrentPath !== "/";
 
 </script>
 <div class="scrollable border">   
@@ -25,11 +24,11 @@ $: hasParent = currentPath !== "/";
     <File file={parent} on:file-click />
     {/if}
     {#each $FileStore as file(file.path)}
-    <!-- <div in:fade="{{duration:500}}" > -->
-    <File {file} on:file-click on:clear-selection />
+      <!-- <div in:fade="{{duration:500}}" > -->
+      <File {file} on:file-click />
     {/each}
     {#if error}
-    <Error {error} />
+      <Error {error} />
     {/if}
 </div>
 <style>

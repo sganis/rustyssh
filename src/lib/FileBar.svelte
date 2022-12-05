@@ -1,6 +1,6 @@
 <script>
+import {CurrentPath} from '../js/store'
 export let totalFiles = 0;
-export let currentPath = "/";
 
 const handleClick = () => {
     console.log('clicked')
@@ -9,7 +9,7 @@ const handleClick = () => {
 </script>
 
 <div class="search">
-    <input class="input-path" placeholder="Path..." bind:value={currentPath} />    
+    <input class="input-path" placeholder="Path..." bind:value={$CurrentPath} />    
     <button on:click={handleClick}>Filter</button>
     <div class="w100"></div>
     <div class="totalItems">Items: {totalFiles}</div>

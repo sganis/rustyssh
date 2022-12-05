@@ -1,37 +1,44 @@
 <script>
-    import { invoke } from "@tauri-apps/api/tauri"
-    import {createEventDispatcher} from 'svelte'
-    import folderIcon from "../assets/folder.png";
-    import fileIcon from "../assets/file.png";
-    import linkIcon from "../assets/link.png";
+import { invoke } from "@tauri-apps/api/tauri"
+import {createEventDispatcher} from 'svelte'
+import folderIcon from "../assets/folder.png";
+import fileIcon from "../assets/file.png";
+import linkIcon from "../assets/link.png";
+import {FileStore, CurrentPath} from '../js/store'
+import {humanFileSize} from '../js/util'
 
-    export let file = {};
-    
-    let greetMsg = ""
+export let file = {};
 
-    const dispatch = createEventDispatcher();
+const dispatch = createEventDispatcher();
 
-    async function greet(){
-      greetMsg = await invoke("greet", { name })
-    }
-
-    const fileClick = (file) => {
-        dispatch('clear-selection');
-        file.selected = !file.selected;
+const fileClick = (file) => {
+    //dispatch('clear-selection');
+    //file.selected = !file.selected;
+    $CurrentPath = file.path;
+    if (file.filetype==="DIR")
         dispatch('file-click', file.path);
-    }
+}
+
+const filesize = () => {
+    return file.filetype==="DIR" ? "" 
+    : humanFileSize(file.size, true);
+}
+const filemodified = () => {
+    return file.modified===0 ? "" : file.modified;
+}
 
 </script>
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="file" on:click={() => fileClick(file)}>
+<div class="file" class:selected={$CurrentPath===file.path} 
+    on:click={() => fileClick(file)}>
     <img class="icon" 
         src={file.filetype=="DIR"? folderIcon 
             : file.filetype=="LINK" ? linkIcon
             : fileIcon}
         alt="file icon" />
     <span class="filename"> {file.name}</span>
-    <span class="filesize">{file.size}</span>
-    <span class="filemodified">{file.modified}</span> 
+    <span class="filesize">{filesize()}</span>
+    <span class="filemodified">{filemodified()}</span> 
 </div>
 
 <style>
@@ -44,16 +51,21 @@
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 10px;
+    gap: 20px;
     padding: 10px;
     border-bottom: 1px solid gainsboro;  
 }
 .file:hover {
     background-color: whitesmoke;
 }
-
+.selected {
+    font-weight: bold;
+}
 .filename {
     width: 100%;
+}
+.filesize {
+    white-space: nowrap;
 }
 .filemodified {
     white-space: nowrap;

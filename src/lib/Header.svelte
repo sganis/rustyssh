@@ -1,6 +1,7 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri"
     import {UserStore} from '../js/store'
+    import logo from '../assets/logo.png'
     export let version = 'v1.0'
 
     const logout = async () => {
@@ -15,15 +16,16 @@
 </script>
 
 <div class="header">
-    <h1 class="title">Rusty SSH {version}</h1>
-    <div class="w100"></div>
-    {#if $UserStore.isConnected}
+  <img src={logo} alt="logo"/>
+  <h1 class="title">Rusty {version}</h1>
+  <div class="w100"></div>
+  {#if $UserStore.isConnected}
     <div>{$UserStore.user}@{$UserStore.server}</div>
     <!-- svelte-ignore a11y-invalid-attribute -->
     <div><a href="#" on:click={logout}>Logout</a></div>
-    {:else}
+  {:else}
     <div></div>
-    {/if}
+  {/if}
 </div>
 
 <style>

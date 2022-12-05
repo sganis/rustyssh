@@ -42,7 +42,7 @@ fn write_settings(settings: Settings) -> Result<(), String> {
 
 
 #[tauri::command]
-fn connect(settings: Settings, app: State<App>) -> Result<(), String> {
+fn connect_with_password(settings: Settings, app: State<App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();
     match _ssh.connect(
         settings.server.as_str(), 
@@ -72,7 +72,7 @@ fn connect_with_key(settings: Settings, app: State<App>) -> Result<(), String> {
     if settings.private_key.is_empty() {
         pkey = String::from(std::path::Path::new(
             &dirs::home_dir().unwrap())
-            .join(".ssh").join("id_rsa").to_string_lossy()).clone();
+            .join(".ssh").join("id_rsa_pem").to_string_lossy()).clone();
     }
 
     match _ssh.connect_with_key(
@@ -81,9 +81,9 @@ fn connect_with_key(settings: Settings, app: State<App>) -> Result<(), String> {
         settings.user.as_str(), 
         pkey.as_str()) {
         Err(e) => {
+            println!("{e}");
             Err(e)
-        },
-        
+        },        
         Ok(_) => {
             write_settings(settings).expect("Cannot write settings");
             let mut ssh = app.ssh.lock().unwrap();
@@ -114,7 +114,7 @@ fn ssh_run(command: String, app: State<App>) -> Result<String, String> {
 #[tauri::command]
 fn get_files(path: String, app: State<App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
-    let cmd = format!("sh -c \"ls -l --time-style=full-iso {0}|grep '^d'; ls -l --time-style=full-iso {0} |grep -v total|grep -v '^d'\"", path);
+    let cmd = format!("/bin/sh -c \"/bin/ls -l --time-style=full-iso {path}|grep -v total\"");
     match ssh.run(&cmd) {
         Err(e) => Err(e),
         Ok(o) => {
@@ -169,7 +169,12 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
                 println!("{:?}", file);
                 files.push(file);
             }            
-            Ok(serde_json::to_string(&files).unwrap())
+            let mut result: Vec<&File> = files.iter().filter(|f| f.filetype=="DIR").collect();
+            let mut onlyfiles: Vec<&File> = files.iter().filter(|f| f.filetype!="DIR").collect();
+            result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+            onlyfiles.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+            result.extend(onlyfiles);
+            Ok(serde_json::to_string(&result).unwrap())
         },
     }
 }
@@ -180,7 +185,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             read_settings,
             write_settings,
-            connect,
+            connect_with_password,
             connect_with_key,
             disconnect,
             ssh_run,

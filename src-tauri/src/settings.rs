@@ -15,7 +15,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self { 
         let home = String::from(dirs::home_dir().unwrap().to_string_lossy());
-        let pkey = String::from(std::path::Path::new(home.as_str()).join(".ssh").join("id_rsa").to_string_lossy());
+        let pkey = String::from(std::path::Path::new(home.as_str()).join(".ssh").join("id_rsa_pem").to_string_lossy());
         Self { 
             server: "localhost".into(),
             user: "support".into(),
@@ -27,7 +27,7 @@ impl Default for Settings {
         } 
     }
 }
-
+ 
 pub fn read_settings() -> Result<Settings, String> {
     let settings: Settings = match confy::load("rustyssh", None) {
         Err(e) =>{
