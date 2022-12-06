@@ -7,8 +7,8 @@
     "withGlobalTauri": false
   },
   "package": {
-    "productName": "rustyssh",
-    "version": "0.0.0"
+    "productName": "Rustyssh",
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {

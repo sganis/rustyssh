@@ -91,13 +91,13 @@ button {
 
 button {
   cursor: pointer;
-  color: white;
-  background-color: darkcyan;
+  /* color: white;
+  background-color: darkcyan; */
 }
 
 button:hover {
   border-color: darkblue;
-  background-color: darkcyan;
+  /* background-color: darkcyan; */
 }
 
 input,
