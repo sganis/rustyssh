@@ -14,6 +14,7 @@ pub struct Ssh {
     private_key : String,
 }
 
+#[allow(dead_code)]
 impl Ssh {
     pub fn new() -> Self {
         Self { ..Default::default() }
@@ -35,26 +36,16 @@ impl Ssh {
         Path::new(&Ssh::public_key_path()).exists()
     }
     fn generate_public_key() -> Result<(), String> {
-        Ok(())
-    }
-    fn generate_keys() -> Result<(), String> {
         let seckey = Ssh::private_key_path();
-        let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
         let pubkey = Ssh::public_key_path();
         let pubbak = PathBuf::from(pubkey.to_string_lossy().to_string() + ".bak");
 
-        // backup keys
-        if Path::new(&seckey).exists() {
-            std::fs::rename(&seckey, &secbak).unwrap();
-        }
-        if Path::new(&pubkey).exists() {
+        // backup key
+        if pubkey.exists() {
             std::fs::rename(&pubkey, &pubbak).unwrap();
         }
-        assert!(!Ssh::has_private_key());
         assert!(!Ssh::has_public_key());
-        
-        let exe = "C:\\Users\\san\\Documents\\rustyssh\\src-tauri\\tools\\ssh-keygen.exe";
-        let cmd = format!("{exe} -m PEM -N \"\" -f {}", seckey.to_str().unwrap());
+        let cmd = format!("ssh-keygen -f {} -y > {}", seckey.display(), pubkey.display());
         let (o,e,_) = command::run(&cmd);
         
         if e.len()>0 {
@@ -63,31 +54,74 @@ impl Ssh {
             Ok(())
         }
     }
-    fn transfer_public_key() -> Result<(), String> {
+    fn generate_keys() -> Result<(), String> {
+        let seckey = Ssh::private_key_path();
+        let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
+        let pubkey = Ssh::public_key_path();
+        let pubbak = PathBuf::from(pubkey.to_string_lossy().to_string() + ".bak");
+
+        // backup keys
+        if seckey.exists() {
+            std::fs::rename(&seckey, &secbak).unwrap();
+        }
+        if pubkey.exists() {
+            std::fs::rename(&pubkey, &pubbak).unwrap();
+        }
+        assert!(!Ssh::has_private_key());
+        assert!(!Ssh::has_public_key());
+        // let mut exe = std::env::current_exe().unwrap();
+        // println!("app dir: {}", exe.display());
+        // //println!("tauri exe: {}", tauri::api::path::executable_dir().unwrap().display());
+
+        // exe.pop();
+        // exe.push("ssh-keygen.exe");
+
+
+        //let exe = Path::new("C:\\Users\\san\\Documents\\rustyssh\\src-tauri\\tools\\ssh-keygen.exe");
+        //if !exe.exists() {
+        //    return Err("ssh-keygen not found".to_string());
+        //}
+        //let cmd = format!("{} -m PEM -N \"\" -f {}", exe.display(), seckey.to_str().unwrap());
+        let cmd = format!("ssh-keygen -m PEM -N \"\" -f {}", seckey.display());
+        let (_,e,_) = command::run(&cmd);
+        
+        if e.len()>0 {
+            Err(e)
+        } else {
+            Ok(())
+        }
+    }
+    fn transfer_public_key(&mut self) -> Result<(), String> {
+        let pubkeytext = std::fs::read_to_string(&Ssh::public_key_path()).unwrap().trim().to_string();
+        let cmd = format!("exec sh -c \"cd; umask 077; mkdir -p .ssh; echo '{}' >> .ssh/authorized_keys\"",
+                        pubkeytext);
+        println!("{cmd}");
+        if let Err(e) = self.run(&cmd) {
+            Err(e)
+        } else {
+            Ok(())
+        }
+
+    }
+    fn test_ssh(&mut self) -> Result<(), String> {
         Ok(())
     }
-    fn test_ssh() -> Result<(), String> {
-        Ok(())
-    }
-    fn setup_ssh() -> Result<(), String> {
+    fn setup_ssh(&mut self) -> Result<(), String> {
         if !Ssh::has_private_key() {
             if let Err(e) = Ssh::generate_keys() {
                 return Err(format!("Could not generate private key: {e}"));
             }
         }
-        let prikey = Ssh::private_key_path();
-        let pubkey = Ssh::public_key_path();
-
         if !Ssh::has_public_key() {
             if let Err(e) = Ssh::generate_public_key() {
                 return Err(format!("Could not generate public key: {e}"));
             }         
         }
-        if Ssh::test_ssh().is_err() {
-            if let Err(e) = Ssh::transfer_public_key() {
+        if self.test_ssh().is_err() {
+            if let Err(e) = self.transfer_public_key() {
                 return Err(format!("Could not transfer public key: {e}"));
             }
-            if let Err(e) = Ssh::test_ssh() {
+            if let Err(e) = self.test_ssh() {
                 return Err(format!("Test ssh failed: {e}"));
             }
         }
@@ -233,6 +267,16 @@ mod tests {
     fn generate_keys() {
         assert!(Ssh::generate_keys().is_ok());       
     }
-    
+    #[test]
+    fn generate_public_keys() {
+        assert!(Ssh::generate_public_key().is_ok());       
+    }
+    #[test]
+    fn transfer_key() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        assert!(r.is_ok());
+        assert!(ssh.transfer_public_key().is_ok());  
 
+    }
 }

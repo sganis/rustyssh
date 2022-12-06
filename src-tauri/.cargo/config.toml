@@ -7,3 +7,5 @@
 [env]
 # OPENSSL_DIR = "C:\\Openssl-x64" # 3.0.5
 # OPENSSL_INCLUDE_DIR = "C:\\Openssl-1.1.1\\include"
+CC = "CL"
+CARGO_LOG="cargo::core::compiler::fingerprint=info"
