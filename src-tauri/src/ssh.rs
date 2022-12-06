@@ -2,7 +2,7 @@
 use std::io::Read;
 use std::net::TcpStream;
 use ssh2::Session;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use super::command;
 
 #[derive(Default)]
@@ -21,19 +21,19 @@ impl Ssh {
     }
     pub fn private_key_path() -> PathBuf {
         let home = dirs::home_dir().unwrap();
-        let prikey = Path::new(&home).join(".ssh").join("id_rsa");
+        let prikey = home.join(".ssh").join("id_rsa");
         PathBuf::from(&prikey)
     }
     pub fn public_key_path() -> PathBuf {
         let home = dirs::home_dir().unwrap();
-        let pubkey = Path::new(&home).join(".ssh").join("id_rsa.pub");
+        let pubkey = home.join(".ssh").join("id_rsa.pub");
         PathBuf::from(&pubkey)
     }    
     pub fn has_private_key() -> bool {     
-        Path::new(&Ssh::private_key_path()).exists()
+        Ssh::private_key_path().exists()
     }
     pub fn has_public_key() -> bool {      
-        Path::new(&Ssh::public_key_path()).exists()
+        Ssh::public_key_path().exists()
     }
     fn generate_public_key() -> Result<(), String> {
         let seckey = Ssh::private_key_path();
@@ -206,7 +206,7 @@ mod tests {
     const USER: &str = "support";
     const PASS: &str = "support";
     const HOST: &str = "localhost";
-    const PKEY: &str = "C:/users/san/.ssh/id_rsa_pem";
+    const PKEY: &str = "C:\\users\\san\\.ssh\\id_rsa";
     const PORT: i16 = 22;
 
     #[test]
