@@ -90,12 +90,6 @@
         justify-content: space-between;
         padding-top: 10px;
     }
-    input:disabled, button:disabled {
-        pointer-events: none;
-        color:#aaa;
-        background: #f5f5f5;
-        border-color: gainsboro;
-    }
     .spinner {
         display: flex;
         justify-content:flex-start;   

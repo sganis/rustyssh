@@ -4,6 +4,7 @@ on: [push]
 jobs:
   Build:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
