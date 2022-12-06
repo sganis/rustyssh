@@ -1,5 +1,5 @@
 
-use std::io::{Read, Write};
+use std::io::Read;
 use std::net::TcpStream;
 use ssh2::Session;
 use std::path::{Path, PathBuf};
@@ -38,15 +38,9 @@ impl Ssh {
     fn generate_public_key() -> Result<(), String> {
         let seckey = Ssh::private_key_path();
         let pubkey = Ssh::public_key_path();
-        let pubbak = PathBuf::from(pubkey.to_string_lossy().to_string() + ".bak");
-
-        // backup key
-        if pubkey.exists() {
-            std::fs::rename(&pubkey, &pubbak).unwrap();
-        }
-        assert!(!Ssh::has_public_key());
+        
         let cmd = format!("ssh-keygen -f {} -y > {}", seckey.display(), pubkey.display());
-        let (o,e,_) = command::run(&cmd);
+        let (_,e,_) = command::run(&cmd);
         
         if e.len()>0 {
             Err(e)
@@ -56,32 +50,7 @@ impl Ssh {
     }
     fn generate_keys() -> Result<(), String> {
         let seckey = Ssh::private_key_path();
-        let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
-        let pubkey = Ssh::public_key_path();
-        let pubbak = PathBuf::from(pubkey.to_string_lossy().to_string() + ".bak");
-
-        // backup keys
-        if seckey.exists() {
-            std::fs::rename(&seckey, &secbak).unwrap();
-        }
-        if pubkey.exists() {
-            std::fs::rename(&pubkey, &pubbak).unwrap();
-        }
-        assert!(!Ssh::has_private_key());
-        assert!(!Ssh::has_public_key());
-        // let mut exe = std::env::current_exe().unwrap();
-        // println!("app dir: {}", exe.display());
-        // //println!("tauri exe: {}", tauri::api::path::executable_dir().unwrap().display());
-
-        // exe.pop();
-        // exe.push("ssh-keygen.exe");
-
-
-        //let exe = Path::new("C:\\Users\\san\\Documents\\rustyssh\\src-tauri\\tools\\ssh-keygen.exe");
-        //if !exe.exists() {
-        //    return Err("ssh-keygen not found".to_string());
-        //}
-        //let cmd = format!("{} -m PEM -N \"\" -f {}", exe.display(), seckey.to_str().unwrap());
+        
         let cmd = format!("ssh-keygen -m PEM -N \"\" -f {}", seckey.display());
         let (_,e,_) = command::run(&cmd);
         
@@ -265,12 +234,36 @@ mod tests {
     }
     #[test]
     fn generate_keys() {
-        assert!(Ssh::generate_keys().is_ok());       
+        let seckey = Ssh::private_key_path();
+        let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
+        let pubkey = Ssh::public_key_path();
+        let pubbak = PathBuf::from(pubkey.to_string_lossy().to_string() + ".bak");
+
+        // backup keys
+        if seckey.exists() {
+            std::fs::rename(&seckey, &secbak).unwrap();
+        }
+        if pubkey.exists() {
+            std::fs::rename(&pubkey, &pubbak).unwrap();
+        }
+        assert!(!Ssh::has_private_key());
+        assert!(!Ssh::has_public_key());
+
+        assert!(Ssh::generate_keys().is_ok()); 
+        assert!(Ssh::generate_public_key().is_ok());  
+        assert!(Ssh::has_private_key());
+        assert!(Ssh::has_public_key());
+
+        // restore keys
+        if secbak.exists() {
+            std::fs::rename(&secbak, &seckey).unwrap();
+        }
+        if pubbak.exists() {
+            std::fs::rename(&pubbak, &pubkey).unwrap();
+        }
+        
     }
-    #[test]
-    fn generate_public_keys() {
-        assert!(Ssh::generate_public_key().is_ok());       
-    }
+    
     #[test]
     fn transfer_key() {
         let mut ssh = Ssh::new();
