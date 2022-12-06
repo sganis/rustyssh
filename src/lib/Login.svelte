@@ -49,7 +49,7 @@
           />
           <div class="login-button">
             <div class="w100"></div>          
-            <button type="submit" 
+            <button type="submit" class="btn-primary" 
               disabled={$UserStore.isConnecting}>
               Connect
             </button>
@@ -94,7 +94,7 @@
         pointer-events: none;
         color:#aaa;
         background: #f5f5f5;
-        border-color: #aaa;
+        border-color: gainsboro;
     }
     .spinner {
         display: flex;
