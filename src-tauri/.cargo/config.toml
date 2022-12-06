@@ -3,3 +3,7 @@
 
 # [source.vendored-sources]
 # directory = "../vendor/cargo"
+
+[env]
+# OPENSSL_DIR = "C:\\Openssl-x64" # 3.0.5
+# OPENSSL_INCLUDE_DIR = "C:\\Openssl-1.1.1\\include"
