@@ -8,6 +8,8 @@
     try {
       const r = await invoke("disconnect");
       $UserStore.isConnected = false;
+      $UserStore.needPassword = false;
+      
     } catch (e) {
       console.log(e);
     }

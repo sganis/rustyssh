@@ -88,7 +88,7 @@ impl Ssh {
             Ok(())
         }
     }
-    fn setup_ssh(host: &str, port: i16, user: &str, password: &str) -> Result<(), String> {
+    pub fn setup_ssh(host: &str, port: i16, user: &str, password: &str) -> Result<(), String> {
         if !Ssh::has_private_key() {
             if let Err(e) = Ssh::generate_keys() {
                 return Err(format!("Could not generate private key: {e}"));

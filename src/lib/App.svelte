@@ -9,6 +9,7 @@ import FileList from "$lib/FileList.svelte";
 import Login from "./Login.svelte";
 
 let error = "";
+let message = "";
 
 $: totalFiles = $FileStore.length
 
@@ -24,36 +25,6 @@ const clearSelection = () =>{
         f.selected = false;
     });
     // = [...files];
-}
-
-const loginWithKey = async (e) => {
-    let args = e.detail
-    console.log(args)
-    error = "";
-    const settings = {
-      server: args.server,
-      user: args.user,
-      password: args.password,
-      port: 22,
-      private_key: "",
-      home_dir: "",
-    };
-    //console.log(settings);
-
-    try {
-      await invoke("connect", { settings: settings });
-      $UserStore.user = args.user;
-      $UserStore.server = args.server;
-      $UserStore.isConnected = true;
-      
-      
-      await getFiles("/");
-      
-    } catch (ex) {
-      console.log(ex);
-      $UserStore.error = ex.toString();
-    }
-    $UserStore.isConnecting=false;
 }
 
 const login = async (e) => {
@@ -79,7 +50,7 @@ const login = async (e) => {
       } catch (ex) {
         console.log(ex);
         $UserStore.needPassword = true;
-        $UserStore.error = ex;
+        $UserStore.error = `${ex}<br/>Need passowrd`;
       }
     } else {
       try {
@@ -97,6 +68,18 @@ const login = async (e) => {
 
 
     if ($UserStore.isConnected) {
+      if ($UserStore.needPassword) {
+        // setup ssh
+        message = "Setting up ssh authentication...";
+        try {
+          await invoke("setup_ssh", { settings: settings }); 
+          $UserStore.needPassword = false;
+        } catch (ex) {
+          console.log(ex);
+          $UserStore.error = ex;
+        }
+      }
+
       await getFiles("/");
     }
       
@@ -125,7 +108,7 @@ const login = async (e) => {
   <FileBar {totalFiles} />
   <FileList {error} on:file-click={fileClick}  />
 {:else} 
-  <Login on:login={login} />
+  <Login on:login={login} {message}/>
 {/if}
 
 <style>

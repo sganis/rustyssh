@@ -8,4 +8,5 @@ export const UserStore = writable({
   isConnected: false,
   isConnecting: false,
   error: "",
+  needPassword: false,
 });

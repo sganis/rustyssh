@@ -9,7 +9,7 @@
     let server = 'localhost';
     let user = 'support';
     let password = '';
-    let message = "";
+    export let message = "";
     
     const handleSubmit = async () => {
       $UserStore.error = '';
@@ -45,7 +45,7 @@
           <input
             type="password"
             bind:value={password}
-            disabled="{$UserStore.isConnecting}"
+            disabled="{$UserStore.isConnecting || !$UserStore.needPassword}"
             id="password"
             placeholder="Password"            
           />

@@ -11,7 +11,6 @@ use settings::Settings;
 use std::sync::Mutex;
 use tauri::State;
 use serde::{Deserialize, Serialize};
-use dirs;
 
 #[derive(Default)]
 struct App {
@@ -71,13 +70,8 @@ fn connect_with_key(settings: Settings, app: State<App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();
     let mut pkey = String::new();
     
-    // if Ssh::has_private_key() {
-    //     pkey = String::from(Ssh::private_key_path().to_string_lossy());
-    // } 
-
     if settings.private_key.is_empty() {
-        pkey = String::from(std::path::Path::new(&dirs::home_dir().unwrap())
-            .join(".ssh").join("id_rsa_pem").to_string_lossy()).clone();
+        pkey = String::from(ssh::Ssh::private_key_path().to_string_lossy());
     }
 
     match _ssh.connect_with_key(
@@ -108,6 +102,16 @@ fn disconnect(app: State<App>) -> Result<(), String> {
     let mut ssh = app.ssh.lock().unwrap();
     ssh.disconnect()   
 }
+
+#[tauri::command]
+fn setup_ssh(settings: Settings) -> Result<(), String> {
+    let host = settings.server.as_str();
+    let port = settings.port; 
+    let user = settings.user.as_str();
+    let password = settings.password.as_str();
+    ssh::Ssh::setup_ssh(host, port, user, password)
+}
+
 
 #[tauri::command]
 fn ssh_run(command: String, app: State<App>) -> Result<String, String> {
@@ -193,6 +197,7 @@ fn main() {
             connect_with_password,
             connect_with_key,
             disconnect,
+            setup_ssh,
             ssh_run,
             get_files,
         ])
