@@ -60,22 +60,35 @@ impl Ssh {
             Ok(())
         }
     }
-    fn transfer_public_key(&mut self) -> Result<(), String> {
+    fn transfer_public_key(host: &str, port: i16, user: &str, password: &str) -> Result<(), String> {
         let pubkeytext = std::fs::read_to_string(&Ssh::public_key_path()).unwrap().trim().to_string();
         let cmd = format!("exec sh -c \"cd; umask 077; mkdir -p .ssh; echo '{}' >> .ssh/authorized_keys\"",
                         pubkeytext);
         println!("{cmd}");
-        if let Err(e) = self.run(&cmd) {
+        let mut ssh = Ssh::new();
+        if let Err(e) = ssh.connect_with_password(host, port, user, password) {
+            return Err(e);
+        }
+        if let Err(e) = ssh.run(&cmd) {
             Err(e)
         } else {
             Ok(())
         }
 
     }
-    fn test_ssh(&mut self) -> Result<(), String> {
-        Ok(())
+    fn test_ssh(host: &str, port: i16, user: &str) -> Result<(), String> {
+        if !Ssh::has_private_key() {
+            return Err("No private key".to_string());
+        }
+        let pkey = Ssh::private_key_path();
+        let mut ssh = Ssh::new();
+        if let Err(e) = ssh.connect_with_key(host, port, user, pkey.to_str().unwrap()) {
+            Err(e)
+        } else {        
+            Ok(())
+        }
     }
-    fn setup_ssh(&mut self) -> Result<(), String> {
+    fn setup_ssh(host: &str, port: i16, user: &str, password: &str) -> Result<(), String> {
         if !Ssh::has_private_key() {
             if let Err(e) = Ssh::generate_keys() {
                 return Err(format!("Could not generate private key: {e}"));
@@ -86,11 +99,11 @@ impl Ssh {
                 return Err(format!("Could not generate public key: {e}"));
             }         
         }
-        if self.test_ssh().is_err() {
-            if let Err(e) = self.transfer_public_key() {
+        if Ssh::test_ssh(host, port, user).is_err() {
+            if let Err(e) = Ssh::transfer_public_key(host, port, user, password) {
                 return Err(format!("Could not transfer public key: {e}"));
             }
-            if let Err(e) = self.test_ssh() {
+            if let Err(e) = Ssh::test_ssh(host, port, user) {
                 return Err(format!("Test ssh failed: {e}"));
             }
         }
@@ -265,11 +278,7 @@ mod tests {
     }
     
     #[test]
-    fn transfer_key() {
-        let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
-        assert!(r.is_ok());
-        assert!(ssh.transfer_public_key().is_ok());  
-
+    fn setup_ssh() {
+        assert!(Ssh::setup_ssh(HOST, PORT, USER, PASS).is_ok());
     }
 }
