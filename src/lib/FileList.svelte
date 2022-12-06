@@ -1,12 +1,10 @@
 <script>
-import {FileStore,CurrentPath} from '../js/store'
+import {FileStore,CurrentPath, Error} from '../js/store'
 //import {fade, scale} from 'svelte/transition'
 import File from "./File.svelte";
-import Error from "./Error.svelte";
+import ErrorBox from "./ErrorBox.svelte";
 import {getParent} from "../js/util"
 
-/** @type {string} */
-export let error = "";
 
 $: parent = {
     path: getParent($CurrentPath),
@@ -27,8 +25,8 @@ $: hasParent = $CurrentPath !== "/";
       <!-- <div in:fade="{{duration:500}}" > -->
       <File {file} on:file-click />
     {/each}
-    {#if error}
-      <Error {error} />
+    {#if $Error}
+      <ErrorBox />
     {/if}
 </div>
 <style>

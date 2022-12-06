@@ -1,4 +1,6 @@
 <script>
+// @ts-nocheck
+
 import { invoke } from "@tauri-apps/api/tauri"
 import {createEventDispatcher} from 'svelte'
 import folderIcon from "../assets/folder.png";

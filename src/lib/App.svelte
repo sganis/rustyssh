@@ -2,14 +2,12 @@
 // @ts-nocheck
 
 import { invoke } from "@tauri-apps/api/tauri"
-import {FileStore, UserStore} from '../js/store'
-import {getParent} from "../js/util.js";
+import {FileStore, UserStore, Message, Error} from '../js/store'
+import {sleep} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
 import Login from "./Login.svelte";
 
-let error = "";
-let message = "";
 
 $: totalFiles = $FileStore.length
 
@@ -30,7 +28,7 @@ const clearSelection = () =>{
 const login = async (e) => {
     let args = e.detail
     console.log(args)
-    error = "";
+    $Error = "";
     const settings = {
       server: args.server,
       user: args.user,
@@ -42,7 +40,7 @@ const login = async (e) => {
 
     if (args.password.length==0) {
       try {
-        console.log('connecting with key...');
+        $Message = "Connecting with keys...";
         await invoke("connect_with_key", { settings: settings }); 
         $UserStore.user = args.user;
         $UserStore.server = args.server;
@@ -50,11 +48,11 @@ const login = async (e) => {
       } catch (ex) {
         console.log(ex);
         $UserStore.needPassword = true;
-        $UserStore.error = `${ex}<br/>Need passowrd`;
+        $Error = `${ex}<br/>Need passowrd`;
       }
     } else {
       try {
-        console.log('connecting with password...');
+        $Message = "Connecting...";
         await invoke("connect_with_password", { settings: settings }); 
         $UserStore.user = args.user;
         $UserStore.server = args.server;
@@ -62,32 +60,29 @@ const login = async (e) => {
       } catch (ex) {
         console.log(ex);
         $UserStore.needPassword = true;
-        $UserStore.error = ex;
+        $Error = ex;
       }
     }
 
-
     if ($UserStore.isConnected) {
       if ($UserStore.needPassword) {
-        // setup ssh
-        message = "Setting up ssh authentication...";
+        $Message = "Setting up SSH keys...";
         try {
           await invoke("setup_ssh", { settings: settings }); 
           $UserStore.needPassword = false;
         } catch (ex) {
           console.log(ex);
-          $UserStore.error = ex;
+          $Error = ex;
         }
       }
-
       await getFiles("/");
     }
       
     $UserStore.isConnecting=false;
 }
 
-  const getFiles = async (path) => {
-    error = "";
+const getFiles = async (path) => {
+    $Error = "";
     try {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path });
@@ -96,19 +91,19 @@ const login = async (e) => {
       $FileStore = js.length > 0 ? [...js] : [];      
     } catch (e) {
       console.log(e);
-      error = e.toString();
+      $Error = e.toString();
       $FileStore = [];      
     }
-  };
+};
 
 </script>
 
 
-{#if $UserStore.isConnected}
+{#if $UserStore.isConnected && !$UserStore.isConnecting}
   <FileBar {totalFiles} />
-  <FileList {error} on:file-click={fileClick}  />
+  <FileList on:file-click={fileClick}  />
 {:else} 
-  <Login on:login={login} {message}/>
+  <Login on:login={login} />
 {/if}
 
 <style>

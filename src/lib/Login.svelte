@@ -1,24 +1,22 @@
 <script>
     import {createEventDispatcher} from 'svelte'
-    import {UserStore} from '../js/store'
-
-    import Spinner from '$lib/Spinner.svelte'
+    import {UserStore, Message, Error} from '../js/store'
+    import Spinner from './Spinner.svelte'
     import { sleep } from '../js/util';
     const dispatch = createEventDispatcher();
 
     let server = 'localhost';
     let user = 'support';
     let password = '';
-    export let message = "";
     
     const handleSubmit = async () => {
-      $UserStore.error = '';
+      $Error = '';
+      $Message = "Connecting...";
       $UserStore.isConnecting = true;
-        message = "Connecting...";
-        await sleep(1000);
-        dispatch('login', {
-            server,user,password
-        })
+      await sleep(1000);
+      dispatch('login', {
+          server,user,password
+      })
     }
 
 </script>
@@ -62,11 +60,11 @@
     <div class="message ">
       {#if $UserStore.isConnecting}
       <div class="spinner">
-        <Spinner/> {message}
+        <Spinner/> {$Message}
       </div>
       {:else}
       <div class="error">
-        {$UserStore.error}
+        {@html $Error}
       </div>
       {/if}
     </div>
