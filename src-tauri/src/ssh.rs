@@ -30,11 +30,10 @@ impl Ssh {
         "supported flags above".to_string()
     }
     pub fn private_key_path() -> PathBuf {
-        // let home = dirs::home_dir().unwrap();
-        // let prikey = home.join(".ssh").join("id_rsa");
-        // PathBuf::from(&prikey)
-        PathBuf::from("C:\\Users\\san\\.ssh\\id_rsa")
-
+        let home = dirs::home_dir().unwrap();
+        let prikey = home.join(".ssh").join("id_rsa");
+        PathBuf::from(&prikey)
+        
     }
     pub fn public_key_path() -> PathBuf {
         let home = dirs::home_dir().unwrap();
@@ -221,7 +220,6 @@ mod tests {
     const USER: &str = "support";
     const PASS: &str = "support";
     const HOST: &str = "localhost";
-    const PKEY: &str = "C:\\users\\san\\.ssh\\id_rsa";
     const PORT: i16 = 22;
 
     #[test]
@@ -239,7 +237,8 @@ mod tests {
     #[test]
     fn connect_with_key() {
         let mut ssh = Ssh::new();
-        let pkey = String::from(PKEY);
+        let pkey = Ssh::private_key_path();
+        let pkey = pkey.to_str().unwrap();
         let r = ssh.connect_with_key(HOST, PORT, USER, &pkey);
         assert!(r.is_ok());
     }
@@ -259,9 +258,7 @@ mod tests {
     }
     #[test]
     fn has_private_key() {
-        let pkey = Ssh::has_private_key();
-        println!("has private key:{}", pkey);
-        assert!(pkey);
+        assert!(Ssh::has_private_key());
     }
     #[test]
     #[ignore]
