@@ -27,20 +27,23 @@ impl Ssh {
         println!("MacCs: {:?}", ssh.supported_algs(ssh2::MethodType::MacCs).unwrap());
         println!("CompCs: {:?}", ssh.supported_algs(ssh2::MethodType::CompCs).unwrap());
 
-        "hi".to_string()
+        "supported flags above".to_string()
     }
     pub fn private_key_path() -> PathBuf {
-        let home = dirs::home_dir().unwrap();
-        let prikey = home.join(".ssh").join("id_rsa");
-        PathBuf::from(&prikey)
+        // let home = dirs::home_dir().unwrap();
+        // let prikey = home.join(".ssh").join("id_rsa");
+        // PathBuf::from(&prikey)
+        PathBuf::from("C:\\Users\\san\\.ssh\\id_rsa")
+
     }
     pub fn public_key_path() -> PathBuf {
         let home = dirs::home_dir().unwrap();
-        let pubkey = home.join(".ssh").join("id_rsa.pub");
+        let pubkey = home.join(".ssh").join("id_rsa.pub").clone();
         PathBuf::from(&pubkey)
     }    
     pub fn has_private_key() -> bool {     
         Ssh::private_key_path().exists()
+        
     }
     pub fn has_public_key() -> bool {      
         Ssh::public_key_path().exists()
@@ -236,7 +239,8 @@ mod tests {
     #[test]
     fn connect_with_key() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_key(HOST, PORT, USER, PKEY);
+        let pkey = String::from(PKEY);
+        let r = ssh.connect_with_key(HOST, PORT, USER, &pkey);
         assert!(r.is_ok());
     }
     #[test]
@@ -248,16 +252,19 @@ mod tests {
     #[test]
     fn run_command() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_key(HOST, PORT, USER, PKEY);
+        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
         assert!(r.is_ok());
         let output = ssh.run("whoami").unwrap();
         assert_eq!("support", output.as_str());
     }
     #[test]
     fn has_private_key() {
-        assert!(Ssh::has_private_key());
+        let pkey = Ssh::has_private_key();
+        println!("has private key:{}", pkey);
+        assert!(pkey);
     }
     #[test]
+    #[ignore]
     fn generate_keys() {
         let seckey = Ssh::private_key_path();
         let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
@@ -295,7 +302,7 @@ mod tests {
     }
 
     #[test]
-    fn algs() {
+    fn supported_algs() {
         println!("{}",Ssh::supported_algs());
     }
 }

@@ -125,7 +125,10 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     let cmd = format!("/bin/sh -c \"/bin/ls -l --time-style=full-iso {path}|grep -v total\"");
     match ssh.run(&cmd) {
-        Err(e) => Err(e),
+        Err(e) => {
+            println!("{e}");
+            Err(e)
+        },
         Ok(o) => {
             let mut files: Vec<File> = Vec::new();
             let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
@@ -175,7 +178,7 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
                 };
 
                 let file = File { name,filetype,size, owner, modified, path, parent, link };
-                println!("{:?}", file);
+                //println!("{:?}", file);
                 files.push(file);
             }            
             let mut result: Vec<&File> = files.iter().filter(|f| f.filetype=="DIR").collect();

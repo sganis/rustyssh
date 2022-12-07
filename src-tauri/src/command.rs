@@ -55,7 +55,6 @@ mod tests {
         assert!(o.contains("Not Found"));
         assert_eq!(e, "");
         assert_eq!(r, 1);
-
     }
     
 }

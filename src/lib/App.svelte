@@ -87,7 +87,7 @@ const getFiles = async (path) => {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path });
       const js = JSON.parse(r);
-      console.log(js)
+      //console.log(js)
       $FileStore = js.length > 0 ? [...js] : [];      
     } catch (e) {
       console.log(e);
