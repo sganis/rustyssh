@@ -19,21 +19,25 @@ if ($installed) {
     Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
 }
 
-# $zip = "C:\cache\ubuntu1804.zip"
-# $exe = "C:\MyWSL\ubuntu1804\ubuntu1804.exe"
-# $url = "https://aka.ms/wsl-ubuntu-1804"
-# $folder = "C:\MyWSL\ubuntu1804"
+# $name = "Ubuntu1804"
+# $zip = "C:\cache\$name.tar.gz"
+# $folder = "C:\MyWSL\$name"
+# $url = "https://cloud-images.ubuntu.com/releases/bionic/release/ubuntu-18.04-server-cloudimg-amd64-wsl.rootfs.tar.gz"
 
-$zip = "C:\cache\ubuntu2004.zip"
-$exe = "C:\MyWSL\ubuntu2004\ubuntu2004.exe"
-$url = "https://wsldownload.azureedge.net/Ubuntu_2004.2020.424.0_x64.appx"
-# $url = "# https://aka.ms/wslubuntu2004" # this has many versions
-$folder = "C:\MyWSL\ubuntu2004"
+# $name = "Ubuntu2004"
+# $zip = "C:\cache\$name.tar.gz"
+# $folder = "C:\MyWSL\$name"
+# $url = "https://cloud-images.ubuntu.com/releases/focal/release/ubuntu-20.04-server-cloudimg-amd64-wsl.rootfs.tar.gz"
+
+$name = "Ubuntu2204"
+$zip = "C:\cache\$name.tar.gz"
+$folder = "C:\MyWSL\$name"
+$url = "https://cloud-images.ubuntu.com/wsl/jammy/current/ubuntu-jammy-wsl-amd64-wsl.rootfs.tar.gz"
 
 
 New-Item -ItemType Directory -Force -Path C:\MyWSL
 
-if (!(Test-Path $exe)) {
+if (!(Test-Path $folder)) {
     Write-host "Installing Ubuntu for WSL"
     if (!(Test-Path $zip)) {
         Write-host "Downloading..."
@@ -43,29 +47,50 @@ if (!(Test-Path $exe)) {
         Write-host "Downloaded already, found in cache..."
     }
     Write-host "Installing..."
-    Expand-Archive -Path "$zip" -DestinationPath "$folder" -Force
-    . $exe install --root
-}
 
-. $exe run sudo adduser support --gecos `"First,Last,RoomNumber,WorkPhone,HomePhone`" --disabled-password
-. $exe run sudo "echo 'support:support' | sudo chpasswd"
-. $exe run sudo usermod -aG sudo support
-. $exe run sudo "echo -e `"`"support\tALL=(ALL)\tNOPASSWD: ALL`"`" > /etc/sudoers.d/support 2>/dev/null"
-. $exe run chmod 0755 /etc/sudoers.d/support
+    # rootfs image
+    mkdir $folder
+    wsl.exe --import $name $folder $zip
+    # appx image
+    # Expand-Archive -Path "$zip" -DestinationPath "$folder" -Force
+    # . $exe install --root\
+   
+}
+Write-host "Setting $name as default distro..."
+wsl.exe -s $name
+
+Write-host "Creating support user..."
+wsl.exe -- adduser support --gecos `"First,Last,RoomNumber,WorkPhone,HomePhone`" --disabled-password
+wsl.exe -- echo `'support:support`' `| chpasswd
+wsl.exe -- usermod -aG sudo support
+wsl.exe -- echo -e `"support\tALL=`(ALL`)\tNOPASSWD: ALL`" `> /etc/sudoers.d/support 2`>/dev/null
+wsl.exe -- chmod 0755 /etc/sudoers.d/support
 
 
 # Write-host "Updating..."
-# . $exe run sudo apt-get update
+# wsl.exe -e apt-get update
 # Write-host "Checing user..."
-# . $exe run whoami
+# wsl.exe -e whoami
 
 Write-host "Installing ssh..."
-. $exe run sudo apt-get update
-. $exe run sudo apt-get remove -y -qq --purge openssh-server `>`/dev/null
-. $exe run sudo apt-get install -y -qq openssh-server `>`/dev/null
-. $exe run sudo service ssh --full-restart
+wsl.exe -- apt-get update
+wsl.exe -- apt-get remove -y -qq --purge openssh-server `> /dev/null
+wsl.exe -- apt-get install -y -qq openssh-server `> /dev/null
+wsl.exe -- service ssh --full-restart
 
 # Write-Host "Export only available from Version 10.0.20363.720"
 # $host
 # Write-host "Exporting..."
 # wsl --export Ubuntu-20.04 $tar
+
+# tauri prerequisites
+# sudo apt install libwebkit2gtk-4.0-dev build-essential curl wget \
+#     libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+
+# nodejs:
+# curl -fsSL https://deb.nodesource.com/setup_current.x | sudo -E bash - 
+# sudo apt-get install -y nodejs
+# npm i -g yarn
+
+# rust
+# curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh

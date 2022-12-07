@@ -19,6 +19,16 @@ impl Ssh {
     pub fn new() -> Self {
         Self { ..Default::default() }
     }
+    pub fn supported_algs() -> String {
+        let ssh = Session::new().unwrap();
+        println!("HostKey: {:?}", ssh.supported_algs(ssh2::MethodType::HostKey).unwrap());
+        println!("CryptCs: {:?}", ssh.supported_algs(ssh2::MethodType::CryptCs).unwrap());
+        println!("Kex: {:?}", ssh.supported_algs(ssh2::MethodType::Kex).unwrap());
+        println!("MacCs: {:?}", ssh.supported_algs(ssh2::MethodType::MacCs).unwrap());
+        println!("CompCs: {:?}", ssh.supported_algs(ssh2::MethodType::CompCs).unwrap());
+
+        "hi".to_string()
+    }
     pub fn private_key_path() -> PathBuf {
         let home = dirs::home_dir().unwrap();
         let prikey = home.join(".ssh").join("id_rsa");
@@ -67,9 +77,11 @@ impl Ssh {
         println!("{cmd}");
         let mut ssh = Ssh::new();
         if let Err(e) = ssh.connect_with_password(host, port, user, password) {
+            println!("Error transfering keys, login with password: {e}");
             return Err(e);
         }
         if let Err(e) = ssh.run(&cmd) {
+            println!("Error transfering keys, running command: {e}");            
             Err(e)
         } else {
             Ok(())
@@ -114,7 +126,7 @@ impl Ssh {
         -> Result<(), String> {
         let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
             Err(e) => {
-                println!("tcp error: {}", e.to_string());
+                println!("tcp error: {:?}", e);
                 return Err(e.to_string())
             },
             Ok(o) => o,
@@ -123,12 +135,12 @@ impl Ssh {
         let mut session = Session::new().unwrap();
         session.set_tcp_stream(tcp);
         if let Err(e) = session.handshake() {
-            println!("handshake error: {}", e.to_string());
+            println!("handshake error here: {:?}", e);
                 
             return Err(e.to_string());
         }
         if let Err(e) = session.userauth_password(user, password) {
-            println!("authentication error: {}", e.to_string());
+            println!("authentication error: {:?}", e);
                 
             return Err(e.to_string());
         }
@@ -280,5 +292,10 @@ mod tests {
     #[test]
     fn setup_ssh() {
         assert!(Ssh::setup_ssh(HOST, PORT, USER, PASS).is_ok());
+    }
+
+    #[test]
+    fn algs() {
+        println!("{}",Ssh::supported_algs());
     }
 }

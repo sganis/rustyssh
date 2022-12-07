@@ -16,6 +16,7 @@ serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 tauri = {version = "1.2", features = ["api-all"] }
 ssh2 = "0.9.3"
+# ssh2 = { path = "../../ssh2-rs" }
 confy = "0.5.1"
 dirs = "4.0.0"
 tauri-plugin-window-state = "0.1.0"

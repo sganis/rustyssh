@@ -4,11 +4,12 @@ use std::process::Command;
 use std::os::windows::process::CommandExt;
 
 pub fn run(cmd: &str) -> (String, String, i32) {
-    let r = if cfg!(windows) {
-        Command::new("cmd").arg("/c").raw_arg(cmd).output().unwrap()
-    } else {
-        Command::new("sh").arg("-c").arg(cmd).output().unwrap()
-    };
+    #[cfg(target_os = "windows")]
+    let r = Command::new("cmd").arg("/c").raw_arg(cmd).output().unwrap();
+
+    #[cfg(not(target_os = "windows"))]
+    let r = Command::new("sh").arg("-c").arg(cmd).output().unwrap();
+
     let stdout = String::from_utf8_lossy(&r.stdout).trim().to_string();
     let stderr = String::from_utf8_lossy(&r.stderr).trim().to_string();
     (stdout, stderr, r.status.code().unwrap())
