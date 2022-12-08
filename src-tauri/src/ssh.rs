@@ -1,6 +1,8 @@
 
 use std::io::Read;
-use std::net::TcpStream;
+use std::net::{TcpStream, SocketAddr, ToSocketAddrs};
+use std::sync::mpsc::RecvTimeoutError;
+use std::time::Duration;
 use ssh2::Session;
 use std::path::PathBuf;
 use super::command;
@@ -126,7 +128,23 @@ impl Ssh {
     
     pub fn connect_with_password(&mut self, host: &str, port: i16, user: &str, password: &str) 
         -> Result<(), String> {
-        let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
+        let timeout = Duration::new(3, 0); // 5 secs
+        println!("\n######## remote address 1:");
+        let remote: Vec<_> =  format!("{}:{}", host, port)
+            .to_socket_addrs()
+            .expect("Unable to resolve domain")
+            .collect();
+        println!("remote: {:?}", remote);
+        // let remote = match format!("{}:{}", host, port).parse::<SocketAddr>() {
+        //     Err(e) => {
+        //         println!("parse remote error: {}:{}  {:?}",host, port, e);
+        //         return Err(e.to_string())
+        //     },
+        //     Ok(o) => o,
+        // };
+        println!("\n######## remote address 2: {:?}", remote);
+
+        let tcp = match TcpStream::connect_timeout(remote.get(0).unwrap(), timeout) {
             Err(e) => {
                 println!("tcp error: {:?}", e);
                 return Err(e.to_string())
@@ -249,6 +267,12 @@ mod tests {
         assert!(r.is_err());
     }
     #[test]
+    fn connect_with_host_wrong() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_password("example.com", PORT, USER, PASS);
+        assert!(r.is_err());
+    }
+    #[test]
     fn run_command() {
         let mut ssh = Ssh::new();
         let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
@@ -261,7 +285,7 @@ mod tests {
         assert!(Ssh::has_private_key());
     }
     #[test]
-    #[ignore]
+    #[ignore = "makes ssh keys unavailable for other tests to pass"]
     fn generate_keys() {
         let seckey = Ssh::private_key_path();
         let secbak = PathBuf::from(seckey.to_string_lossy().to_string() + ".bak");
