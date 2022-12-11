@@ -1,7 +1,6 @@
 
 use std::io::Read;
-use std::net::{TcpStream, SocketAddr, ToSocketAddrs};
-use std::sync::mpsc::RecvTimeoutError;
+use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 use ssh2::Session;
 use std::path::PathBuf;
@@ -126,46 +125,58 @@ impl Ssh {
         Ok(())
     }
     
-    pub fn connect_with_password(&mut self, host: &str, port: i16, user: &str, password: &str) 
-        -> Result<(), String> {
-        let timeout = Duration::new(3, 0); // 5 secs
-        println!("\n######## remote address 1:");
-        let remote: Vec<_> =  format!("{}:{}", host, port)
-            .to_socket_addrs()
-            .expect("Unable to resolve domain")
-            .collect();
-        println!("remote: {:?}", remote);
-        // let remote = match format!("{}:{}", host, port).parse::<SocketAddr>() {
-        //     Err(e) => {
-        //         println!("parse remote error: {}:{}  {:?}",host, port, e);
-        //         return Err(e.to_string())
-        //     },
-        //     Ok(o) => o,
-        // };
-        println!("\n######## remote address 2: {:?}", remote);
-
-        let tcp = match TcpStream::connect_timeout(remote.get(0).unwrap(), timeout) {
+    fn _get_tcp(&mut self, host: &str, port: i16) -> Result<TcpStream, String> {
+        let timeout = Duration::new(5, 0); // 5 secs
+        let addresses: Vec<_> = match format!("{}:{}", host, port).to_socket_addrs() {
             Err(e) => {
-                println!("tcp error: {:?}", e);
+                println!("Unable to resolve address: {}:{}  {:?}",host, port, e);
                 return Err(e.to_string())
             },
+            Ok(o) => o.collect(),
+        };
+        let mut tcp = None;
+        let mut error = String::new();
+
+        for addr in addresses {
+            match TcpStream::connect_timeout(&addr, timeout) {
+                Err(e) => {
+                    error.push_str(&format!("tcp error: {:?}\n", e));
+                    continue;
+                },
+                Ok(o) => {
+                    println!("connected to: {:?}", addr);
+                    tcp = Some(o);
+                    break;  
+                },
+            };
+        }
+
+        if tcp.is_none() {
+            return Err(error);
+        }
+
+        Ok(tcp.unwrap())
+    }
+
+    pub fn connect_with_password(&mut self, 
+        host: &str, port: i16, user: &str, password: &str) -> Result<(), String> {
+        
+        let tcp = match self._get_tcp(host, port) {
+            Err(e) => return Err(e),
             Ok(o) => o,
         };
 
         let mut session = Session::new().unwrap();
         session.set_tcp_stream(tcp);
-        if let Err(e) = session.handshake() {
-            println!("handshake error here: {:?}", e);
-                
-            return Err(e.to_string());
+
+        if let Err(e) = session.handshake() {                
+            return Err(format!("SSH handshake error: {}", e));
         }
+        
         if let Err(e) = session.userauth_password(user, password) {
-            println!("authentication error: {:?}", e);
-                
-            return Err(e.to_string());
+            return Err(format!("Authentication error: {e}"));
         }
-        //let pkey = std::path::Path::new("c:\\users\\san\\.ssh\\id_rsa");
-        //session.userauth_pubkey_file("support", None, pkey, None);
+
         assert!(session.authenticated());
         self.session = Some(session);
         self.host = host.to_string();
@@ -173,34 +184,30 @@ impl Ssh {
         self.password = password.to_string();
         Ok(())
     }
-    pub fn connect_with_key(&mut self, host: &str, port: i16, user: &str, pkey: &str) 
-        -> Result<(), String> {
-        let tcp = match TcpStream::connect(format!("{}:{}", host, port)) {
-            Err(e) => {
-                println!("tcp error: {}", e.to_string());
-                return Err(e.to_string());
-            },
+    pub fn connect_with_key(&mut self, 
+        host: &str, port: i16, user: &str, pkey: &str) -> Result<(), String> {
+        let tcp = match self._get_tcp(host, port) {
+            Err(e) => return Err(e),
             Ok(o) => o,
         };
-
         let mut session = Session::new().unwrap();
         session.set_tcp_stream(tcp);
+
         if let Err(e) = session.handshake() {
-            println!("handshake error: {}", e.to_string());              
-            return Err(e.to_string());
+            return Err(format!("SSH handshake error: {}", e));
         }
+
         let private_key = std::path::Path::new(pkey);
-        println!("pkey: {}", private_key.display());
+
         if let Err(e) = session.userauth_pubkey_file(user, None, private_key, None) {
-            println!("key auth error, user: {}, server: {} error: {}",
-                 user, host, e.to_string());
-            return Err("SSH key authentication failed".to_string());
+            return Err(format!("Authentication error: {e}"));
         }
+
         assert!(session.authenticated());
         self.session = Some(session);
         self.host = host.to_string();
         self.user = user.to_string();
-        self.private_key = String::from(private_key.as_os_str().to_string_lossy());
+        self.private_key = pkey.to_string();
         Ok(())
     }
 
