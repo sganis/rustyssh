@@ -4,8 +4,9 @@
 import { invoke } from "@tauri-apps/api/tauri"
 import {createEventDispatcher} from 'svelte'
 import folderIcon from "../assets/folder.png";
+import folderLinkIcon from "../assets/folder.png";
 import fileIcon from "../assets/file.png";
-import linkIcon from "../assets/link.png";
+import fileLinkIcon from "../assets/file-link.png";
 import {FileStore, CurrentPath} from '../js/store'
 import {humanFileSize} from '../js/util'
 
@@ -34,19 +35,19 @@ const filemodified = () => {
 <div class="file" class:selected={$CurrentPath===file.path} 
     on:click={() => fileClick(file)}>
     <img class="icon" 
-        src={file.filetype=="DIR"? folderIcon 
-            : file.filetype=="LINK" ? linkIcon
+        src={file.filetype==="DIR"? folderIcon 
+            : file.filetype==="LINK" ? fileLinkIcon
             : fileIcon}
         alt="file icon" />
-    <span class="filename"> {file.name}</span>
+    <span class="filename"> {file.filetype==="LINK"? `${file.name} => ${file.link}` : file.name}</span>
     <span class="filesize">{filesize()}</span>
     <span class="filemodified">{filemodified()}</span> 
 </div>
 
 <style>
 .icon {
-    width: 20px;
-    height: 20px;
+    width: 30px;
+    height: 30px;
 }
 .file {
     cursor: pointer;

@@ -177,7 +177,7 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
                     &_ => "".to_string(),
                 };
 
-                let file = File { name,filetype,size, owner, modified, path, parent, link };
+                let file = File { name, filetype, size, owner, modified, path, parent, link };
                 //println!("{:?}", file);
                 files.push(file);
             }            
