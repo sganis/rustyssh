@@ -191,6 +191,36 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn get_file_types(paths: Vec<String>, app: State<App>) -> Result<String, String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    let cmd = format!("file -L \"{}\"", paths.join("\" \""));
+    match ssh.run(&cmd) {
+        Err(e) => {
+            println!("{e}");
+            Err(e)
+        },
+        Ok(o) => {
+            let mut files: Vec<(String, bool)> = Vec::new();
+            let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
+            for line in lines {
+                let items: Vec<String> = line.split(":").map(|s| s.to_string()).collect();
+                if items.len() < 2 {
+                    continue;
+                }
+                let path = items[0].clone();
+                //println!("{:?}", &items);
+                let start = items[1].len()-9;
+                //println!("{}", &items[1][start..]);
+                let is_dir = if items[1][start..].contains("directory") { true } else { false };
+                files.push((path, is_dir));
+            }
+            println!("{:?}", &files);
+            Ok(serde_json::to_string(&files).unwrap())
+        },
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(App {..Default::default() })
@@ -203,6 +233,7 @@ fn main() {
             setup_ssh,
             ssh_run,
             get_files,
+            get_file_types,
         ])
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .run(tauri::generate_context!())

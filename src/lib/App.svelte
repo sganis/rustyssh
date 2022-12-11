@@ -88,11 +88,33 @@ const getFiles = async (path) => {
       const r = await invoke("get_files", { path });
       const js = JSON.parse(r);
       //console.log(js)
-      $FileStore = js.length > 0 ? [...js] : [];      
+      $FileStore = js.length > 0 ? [...js] : [];     
+      let symlinks = $FileStore.filter(f=>f.filetype === "LINK").map(f => f.path);
+      //console.log("symlinks:",symlinks);
+      if (symlinks.length > 0) {
+        const symdir_dirs = await getFileTypes(symlinks);
+      }
     } catch (e) {
       console.log(e);
       $Error = e.toString();
       $FileStore = [];      
+    }
+};
+const getFileTypes = async (paths) => {
+    //$Error = "";
+    try {
+      console.log("getting file types:");
+      const r = await invoke("get_file_types", { paths });
+      const js = JSON.parse(r);
+      console.log(js)
+      // $FileStore = js.length > 0 ? [...js] : [];     
+      // let symlinks = $FileStore.filter(f=>f.filetype === "LINK").map(f => f.path);
+      // //console.log("symlinks:",symlinks);
+      // await get_filetypes(symlinks);
+    } catch (e) {
+      console.log(e);
+      // $Error = e.toString();
+      // $FileStore = [];      
     }
 };
 
