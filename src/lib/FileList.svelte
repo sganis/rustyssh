@@ -13,13 +13,15 @@ $: parent = {
     size: 0,
     modified: 0,
     selected: false,
+    is_dir: true,
+    is_link: false,
 };
 $: hasParent = $CurrentPath !== "/";
 
 </script>
 <div class="scrollable border">   
     {#if hasParent}
-    <File file={parent} on:file-click />
+      <File file={parent} on:file-click />
     {/if}
     {#each $FileStore as file(file.path)}
       <!-- <div in:fade="{{duration:500}}" > -->
