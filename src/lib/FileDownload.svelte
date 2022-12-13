@@ -1,5 +1,9 @@
 <script>
+import {CurrentPath} from '../js/store'
 
 </script>
 
-<div class="scrollable">Download file</div>
+<div class="scrollable">
+    {$CurrentPath}
+    
+</div>

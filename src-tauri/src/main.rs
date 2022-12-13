@@ -7,11 +7,11 @@ mod settings;
 mod ssh;
 mod command;
 
+use tauri::Window;
 use settings::Settings;
-use std::{sync::Mutex, fs::OpenOptions, collections::HashMap};
+use std::sync::Mutex;
 use tauri::State;
 use serde::{Deserialize, Serialize};
-use std::io::Write;
 
 #[derive(Default)]
 struct App {
@@ -44,7 +44,7 @@ fn write_settings(settings: Settings) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn connect_with_password(settings: Settings, app: State<App>) -> Result<(), String> {
+fn connect_with_password(settings: Settings, app: State<'_,App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();
     match _ssh.connect_with_password(
         settings.server.as_str(), 
@@ -68,7 +68,7 @@ fn connect_with_password(settings: Settings, app: State<App>) -> Result<(), Stri
 }
 
 #[tauri::command]
-fn connect_with_key(settings: Settings, app: State<App>) -> Result<(), String> {
+fn connect_with_key(settings: Settings, app: State<'_,App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();
     let mut pkey = String::new();
     
@@ -105,7 +105,7 @@ fn disconnect(app: State<App>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn setup_ssh(settings: Settings) -> Result<(), String> {
+async fn setup_ssh(settings: Settings) -> Result<(), String> {
     let host = settings.server.as_str();
     let port = settings.port; 
     let user = settings.user.as_str();
@@ -115,13 +115,13 @@ fn setup_ssh(settings: Settings) -> Result<(), String> {
 
 
 #[tauri::command]
-fn ssh_run(command: String, app: State<App>) -> Result<String, String> {
+async fn ssh_run(command: String, app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     ssh.run(&command)
 }
 
 #[tauri::command]
-fn get_files(path: String, app: State<App>) -> Result<String, String> {
+async fn get_files(path: String, app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     let mut files: Vec<File> = Vec::new();
     let cmd = format!("/bin/sh -c \"/bin/ls -lH --time-style=full-iso {path}|grep -v total\"");
@@ -216,7 +216,7 @@ fn get_files(path: String, app: State<App>) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn get_page(path: String, page: i32, records_per_page: i32, app: State<App>) -> Result<String, String> {
+async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     let o = ssh.run(&format!("file {path}"))?;
     let is_textfile = o.contains(" text");
@@ -233,19 +233,26 @@ fn get_page(path: String, page: i32, records_per_page: i32, app: State<App>) -> 
     }
 }
 
+
 #[tauri::command]
-fn download(path: String, app: State<App>) -> Result<String, String> {
+async fn download(
+    remotepath: String, 
+    localpath: String,
+    window: Window, 
+    app: State<'_, App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
-    match ssh.download(&path) {
+    match ssh.download(&remotepath, &localpath, window) {
         Err(e) => Err(e),
         Ok(o) => {
-            println!("file saved to: {path}");
-            Ok(o)
+            println!("file saved to: {localpath}");
+            Ok(serde_json::to_string(&o).unwrap())
         },
     }
 }
+
+
 #[tauri::command]
-fn upload(path: String, app: State<App>) -> Result<String, String> {
+async fn upload(path: String, app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     // if let Err(e) = match ssh.download(&path) {
     //     return Err(format!("Failed to download file {}: {}", path, e));

@@ -13,6 +13,9 @@ const handleClick = () => {
 const goUp = () => {
     dispatch('go-up', $CurrentPath);
 }
+const downloadClick = () => {
+    dispatch('download', $CurrentPath);
+}
 
 </script>
 
@@ -20,6 +23,7 @@ const goUp = () => {
     <input class="input-path" placeholder="Path..." bind:value={$CurrentPath} />    
     <!-- <button on:click={handleClick}>Filter</button> -->
     <button on:click={goUp} disabled={inRootFolder}>Go Up</button>
+    <button on:click={downloadClick}>Download</button>
     <div class="w100"></div>
     <div class="totalItems">Items: {totalFiles}</div>
 </div>

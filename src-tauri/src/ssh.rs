@@ -1,6 +1,5 @@
-
-use std::fs::OpenOptions;
-use std::io::{Read, Write};
+use std::fs::File;
+use std::io::{Read, Write, BufWriter};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 use ssh2::Session;
@@ -14,6 +13,11 @@ pub struct Ssh {
     user : String,
     password : String,
     private_key : String,
+}
+
+#[derive(Clone, serde::Serialize)]
+struct Payload {
+    percent: i32,
 }
 
 #[allow(dead_code)]
@@ -231,24 +235,44 @@ impl Ssh {
         channel.wait_close().unwrap();
         Ok(s.trim().to_string())
     }
-    pub fn download(&mut self, remotepath: &str) -> Result<String, String> {
+    pub fn download(&mut self, 
+        remotepath: &str, 
+        localpath: &str, 
+        window: tauri::Window) -> Result<String, String> {
         println!("downloading: {remotepath}");
         let (mut channel, stat) = match self.session.as_ref().unwrap()
             .scp_recv(Path::new(remotepath)) {
             Err(e) => return Err(format!("Cannot open scp channel: {}", e)),
             Ok(o) => o,
         };
-        println!("remote file size: {}", stat.size());
-        let mut content = Vec::new();
-        channel.read_to_end(&mut content).unwrap();
-        let localpath = "file.txt";
-        let mut file = match OpenOptions::new().write(true).open(localpath) {
-            Err(e) => return Err(format!("Cannot open file for writing: {}, error: {}", localpath, e)),
-            Ok(o) => o,
-        };
-        file.write_all(&content);        
-        //channel.wait_close().unwrap();
-        Ok("".to_string())
+        let size = stat.size();
+        println!("remote file size: {}", size);
+        let f = File::create(localpath).expect("Unable to create file");
+        let mut f = BufWriter::new(f);
+        let mut buffer = [0; 16000];
+        let mut count = 0;
+        loop {
+            match channel.read(&mut buffer[..]) {
+                Err(e) => {
+                    println!("error: {:?}", e);
+                    return Err(e.to_string())
+                },
+                Ok(n) => {
+                    // println!("{n} bytes read");
+                    if n == 0 {
+                        break;
+                    } else {
+                        f.write(&buffer[..n]).unwrap();
+                        count += n;
+                    }
+                    let percent = ((count as f64/size as f64) * 100.0)  as i32;
+                    window.emit("PROGRESS", Payload { percent }).unwrap();
+                    // println!("written: {count}/{size} {percent}%")
+                }
+            }
+        }
+        println!("written: {count}");
+        Ok("done".to_string())
     }
 }
 

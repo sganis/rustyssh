@@ -1,5 +1,6 @@
 <script>
 import {PageStore} from '../js/store'
+
 </script>
 
 <div class="scrollable monospace">

@@ -9,12 +9,23 @@ import FileList from "$lib/FileList.svelte";
 import FilePage from "$lib/FilePage.svelte";
 import FileDownload from "$lib/FileDownload.svelte";
 import Login from "./Login.svelte";
+import { appWindow } from '@tauri-apps/api/window';
+import { emit, listen } from '@tauri-apps/api/event'
 
 let fileRequested = false;
 
 $: totalFiles = $FileStore.length;
 $: isTextfile = $PageStore !== "Binary file";
 
+// await listen("PROGRESS", ({ event, payload }) => { 
+//   console.log(payload)
+// });
+
+// (async () => {
+//   const unlisten = await listen('PROGRESS', ({event, payload}) => {
+//   console.log(payload)
+// })
+// })();
 
 const fileClick = async (e) => {
     const file = e.detail;
@@ -116,16 +127,28 @@ const goUp = async (e) => {
   fileRequested = false;
   await getFiles(path);
 }
+const download = async (e) => {
+  //const remotepath = e.detail;
+  const remotepath = "/usr.tar";
+  const localpath = "C:\\Users\\san\\usr.tar";
+  try {
+      const r = await invoke("download", { remotepath, localpath, window: appWindow });
+      const js = JSON.parse(r);
+ 
+    } catch (e) {
+      console.log(e)
+    }
+}
 
 </script>
 
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
-  <FileBar {totalFiles} on:go-up={goUp}/>
+  <FileBar {totalFiles} on:go-up={goUp} on:download={download}/>
   {#if fileRequested}
     {#if isTextfile}
       <FilePage />
     {:else}
-      <FileDownload />
+      <FileDownload  />
     {/if}
   {:else}
   
