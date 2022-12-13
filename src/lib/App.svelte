@@ -2,26 +2,28 @@
 // @ts-nocheck
 
 import { invoke } from "@tauri-apps/api/tauri"
-import {FileStore, PageStore, UserStore, Message, Error} from '../js/store'
+import {FileStore, PageStore, UserStore, CurrentPath, Message, Error} from '../js/store'
 import {sleep, getParent} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
 import FilePage from "$lib/FilePage.svelte";
+import FileDownload from "$lib/FileDownload.svelte";
 import Login from "./Login.svelte";
 
-let pageRequested = false;
+let fileRequested = false;
 
-$: totalFiles = $FileStore.length
+$: totalFiles = $FileStore.length;
+$: isTextfile = $PageStore !== "Binary file";
 
 
 const fileClick = async (e) => {
     const file = e.detail;
     if (file.is_dir) {
       await getFiles(file.path)
-      pageRequested = false;
+      fileRequested = false;
     } else {
       await getPage(file.path, 1, 100)
-      pageRequested = true;
+      fileRequested = true;
     }
 }
 
@@ -29,6 +31,7 @@ const login = async (e) => {
     let args = e.detail
     console.log(args)
     $Error = "";
+    
     const settings = {
       server: args.server,
       user: args.user,
@@ -83,11 +86,12 @@ const login = async (e) => {
 
 const getFiles = async (path) => {
     $Error = "";
+    $CurrentPath = path;
     try {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path });
-      const js = JSON.parse(r);
-      $FileStore = js.length > 0 ? [...js] : [];     
+      const js = JSON.parse(r);      
+      $FileStore = js.length > 0 ? [...js] : [];  
     } catch (e) {
       console.log(e);
       $Error = e.toString();
@@ -101,25 +105,30 @@ const getPage = async (path, page, recordsPerPage) => {
       const js = JSON.parse(r);
       console.log(js);
       $PageStore = js; 
-      pageRequested = true;    
+      fileRequested = true;    
     } catch (e) {
       console.log(e)
     }
 }
-
 const goUp = async (e) => {
   const path = getParent(e.detail);
   console.log('going up to ', path)
-  await getFiles(getParent(path));
+  fileRequested = false;
+  await getFiles(path);
 }
 
 </script>
 
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
   <FileBar {totalFiles} on:go-up={goUp}/>
-  {#if pageRequested}
-    <FilePage />
+  {#if fileRequested}
+    {#if isTextfile}
+      <FilePage />
+    {:else}
+      <FileDownload />
+    {/if}
   {:else}
+  
     <FileList on:file-click={fileClick}  />
   {/if}
 {:else} 

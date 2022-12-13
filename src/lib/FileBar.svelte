@@ -5,6 +5,8 @@ export let totalFiles = 0;
 
 const dispatch = createEventDispatcher();
 
+$: inRootFolder = $CurrentPath === "/";
+
 const handleClick = () => {
     console.log('clicked')
 }
@@ -16,8 +18,8 @@ const goUp = () => {
 
 <div class="search">
     <input class="input-path" placeholder="Path..." bind:value={$CurrentPath} />    
-    <button on:click={handleClick}>Filter</button>
-    <!-- <button on:click={goUp}>Go Up</button> -->
+    <!-- <button on:click={handleClick}>Filter</button> -->
+    <button on:click={goUp} disabled={inRootFolder}>Go Up</button>
     <div class="w100"></div>
     <div class="totalItems">Items: {totalFiles}</div>
 </div>
@@ -25,7 +27,7 @@ const goUp = () => {
 <style>
 .input-path {
     box-sizing: border-box;
-    /* max-width: 100%; */
+    width: 100%;
 }
 .search {
     display: flex;

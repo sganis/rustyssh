@@ -2,16 +2,12 @@
 import {PageStore} from '../js/store'
 </script>
 
-<div class="scrollable">
+<div class="scrollable monospace">
     {@html $PageStore.replaceAll("\n","<br/>")}
 </div>
 
 <style>
-    .scrollable {
-      overflow-y: auto; 
-      height: 100vh; 
-      scrollbar-gutter: stable;
-      margin: 15px;
-      padding: 10px; 
+    .monospace {
+        font-family: monospace;
     }
 </style>

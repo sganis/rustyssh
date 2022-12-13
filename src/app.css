@@ -83,6 +83,7 @@ button {
   font-size: 1em;
   font-weight: 500;
   font-family: inherit;
+  white-space: nowrap;
   color: #0f0f0f;
   background-color: #ffffff;
   transition: border-color 0.25s;
@@ -116,6 +117,13 @@ input:disabled::-webkit-input-placeholder {
   color: #bbb;
 }
 
+.scrollable {
+  overflow-y: auto; 
+  height: 100vh; 
+  scrollbar-gutter: stable;
+  margin: 15px;
+  padding: 10px; 
+}
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;

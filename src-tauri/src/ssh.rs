@@ -1,9 +1,10 @@
 
-use std::io::Read;
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 use ssh2::Session;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use super::command;
 
 #[derive(Default)]
@@ -124,7 +125,6 @@ impl Ssh {
         }
         Ok(())
     }
-    
     fn _get_tcp(&mut self, host: &str, port: i16) -> Result<TcpStream, String> {
         let timeout = Duration::new(5, 0); // 5 secs
         let addresses: Vec<_> = match format!("{}:{}", host, port).to_socket_addrs() {
@@ -157,7 +157,6 @@ impl Ssh {
 
         Ok(tcp.unwrap())
     }
-
     pub fn connect_with_password(&mut self, 
         host: &str, port: i16, user: &str, password: &str) -> Result<(), String> {
         
@@ -172,7 +171,7 @@ impl Ssh {
         if let Err(e) = session.handshake() {                
             return Err(format!("SSH handshake error: {}", e));
         }
-        
+
         if let Err(e) = session.userauth_password(user, password) {
             return Err(format!("Authentication error: {e}"));
         }
@@ -210,15 +209,12 @@ impl Ssh {
         self.private_key = pkey.to_string();
         Ok(())
     }
-
-
     pub fn disconnect(&mut self) -> Result<(), String> {
         if let Err(e) = self.session.as_ref().unwrap().disconnect(None,"",None) {
             return Err(e.to_string());
         }
         Ok(())
     }
-    
     pub fn run(&mut self, cmd: &str) -> Result<String, String> {
         println!("running CMD: {}", cmd);
         let mut channel = match self.session.as_ref().unwrap().channel_session() {
@@ -234,6 +230,25 @@ impl Ssh {
         channel.read_to_string(&mut s).unwrap();
         channel.wait_close().unwrap();
         Ok(s.trim().to_string())
+    }
+    pub fn download(&mut self, remotepath: &str) -> Result<String, String> {
+        println!("downloading: {remotepath}");
+        let (mut channel, stat) = match self.session.as_ref().unwrap()
+            .scp_recv(Path::new(remotepath)) {
+            Err(e) => return Err(format!("Cannot open scp channel: {}", e)),
+            Ok(o) => o,
+        };
+        println!("remote file size: {}", stat.size());
+        let mut content = Vec::new();
+        channel.read_to_end(&mut content).unwrap();
+        let localpath = "file.txt";
+        let mut file = match OpenOptions::new().write(true).open(localpath) {
+            Err(e) => return Err(format!("Cannot open file for writing: {}, error: {}", localpath, e)),
+            Ok(o) => o,
+        };
+        file.write_all(&content);        
+        //channel.wait_close().unwrap();
+        Ok("".to_string())
     }
 }
 

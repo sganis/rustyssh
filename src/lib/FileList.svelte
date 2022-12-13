@@ -32,11 +32,5 @@ $: hasParent = $CurrentPath !== "/";
     {/if}
 </div>
 <style>
-.scrollable {
-  overflow-y: auto; 
-  height: 100vh; 
-  scrollbar-gutter: stable;
-  margin: 15px;
-  padding: 10px; 
-}
+
 </style>
