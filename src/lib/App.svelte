@@ -2,7 +2,9 @@
 // @ts-nocheck
 
 import { invoke } from "@tauri-apps/api/tauri"
-import {FileStore, PageStore, UserStore, CurrentPath, Message, Error, Progress} from '../js/store'
+import {FileStore, PageStore, 
+  UserStore, CurrentPath, 
+  Message, Error, Progress} from '../js/store'
 import {sleep, getParent} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
@@ -25,8 +27,6 @@ $: isTextfile = $PageStore !== "Binary file";
 })
 })();
 
-
-
 const fileClick = async (e) => {
     const file = e.detail;
     if (file.is_dir) {
@@ -37,7 +37,6 @@ const fileClick = async (e) => {
       fileRequested = true;
     }
 }
-
 const login = async (e) => {
     let args = e.detail
     console.log(args)
@@ -94,7 +93,6 @@ const login = async (e) => {
       
     $UserStore.isConnecting=false;
 }
-
 const getFiles = async (path) => {
     $Error = "";
     $CurrentPath = path;
@@ -109,7 +107,6 @@ const getFiles = async (path) => {
       $FileStore = [];      
     }
 }
-
 const getPage = async (path, page, recordsPerPage) => {
   try {
       const r = await invoke("get_page", { path, page, recordsPerPage });
@@ -147,9 +144,9 @@ const download = async (e) => {
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
   <FileBar {totalFiles} on:go-up={goUp} on:download={download}/>
   <div class="progress">
-    {#if $Progress > 0 }
-      <progress value={$Progress} />
-    {/if}
+  {#if $Progress > 0 }
+    <progress value={$Progress} />
+  {/if}
   </div>
   {#if fileRequested}
     {#if isTextfile}

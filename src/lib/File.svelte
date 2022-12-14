@@ -29,6 +29,7 @@ const filemodified = () => {
 }
 
 </script>
+
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="file" class:selected={$CurrentPath===file.path} 
     on:click={() => fileClick(file)}>
@@ -46,8 +47,8 @@ const filemodified = () => {
 
 <style>
 .icon {
-    width: 30px;
-    height: 30px;
+    width: 22px;
+    height: 22px;
 }
 .file {
     cursor: pointer;
