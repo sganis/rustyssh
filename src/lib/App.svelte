@@ -132,7 +132,7 @@ const download = async (e) => {
   const remotepath = "/usr.tar";
   const localpath = "C:\\Users\\san\\usr.tar";
   try {
-      const r = await invoke("download", { remotepath, localpath, window: appWindow });
+      const r = await invoke("download", { remotepath, localpath, window: appWindow});
       const js = JSON.parse(r);
  
     } catch (e) {
