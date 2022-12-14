@@ -1,11 +1,12 @@
 <script>
 import {createEventDispatcher} from 'svelte'
-import {CurrentPath} from '../js/store'
+import {CurrentPath, Progress} from '../js/store'
 export let totalFiles = 0;
 
 const dispatch = createEventDispatcher();
 
 $: inRootFolder = $CurrentPath === "/";
+$: prog = ($Progress * 100.0).toFixed();
 
 const handleClick = () => {
     console.log('clicked')
@@ -23,15 +24,18 @@ const downloadClick = () => {
     <input class="input-path" placeholder="Path..." bind:value={$CurrentPath} />    
     <!-- <button on:click={handleClick}>Filter</button> -->
     <button on:click={goUp} disabled={inRootFolder}>Go Up</button>
-    <button on:click={downloadClick}>Download</button>
+    <button on:click={downloadClick} disabled={$Progress > 0}>Download</button>
     <div class="w100"></div>
+    {#if $Progress > 0}
+    <div>{prog}%</div>
+    {/if}
     <div class="totalItems">Items: {totalFiles}</div>
 </div>
 
 <style>
 .input-path {
     box-sizing: border-box;
-    width: 100%;
+    width: 400px;
 }
 .search {
     display: flex;

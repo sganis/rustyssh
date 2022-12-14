@@ -2,7 +2,7 @@
 // @ts-nocheck
 
 import { invoke } from "@tauri-apps/api/tauri"
-import {FileStore, PageStore, UserStore, CurrentPath, Message, Error} from '../js/store'
+import {FileStore, PageStore, UserStore, CurrentPath, Message, Error, Progress} from '../js/store'
 import {sleep, getParent} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
@@ -12,20 +12,20 @@ import Login from "./Login.svelte";
 import { appWindow } from '@tauri-apps/api/window';
 import { emit, listen } from '@tauri-apps/api/event'
 
+
 let fileRequested = false;
 
 $: totalFiles = $FileStore.length;
 $: isTextfile = $PageStore !== "Binary file";
 
-// await listen("PROGRESS", ({ event, payload }) => { 
-//   console.log(payload)
-// });
+(async () => {
+  const unlisten = await listen('PROGRESS', ({payload}) => {
+  //console.log(payload);
+  Progress.set(payload.percent);
+})
+})();
 
-// (async () => {
-//   const unlisten = await listen('PROGRESS', ({event, payload}) => {
-//   console.log(payload)
-// })
-// })();
+
 
 const fileClick = async (e) => {
     const file = e.detail;
@@ -142,8 +142,15 @@ const download = async (e) => {
 
 </script>
 
+
+
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
   <FileBar {totalFiles} on:go-up={goUp} on:download={download}/>
+  <div class="progress">
+    {#if $Progress > 0 }
+      <progress value={$Progress} />
+    {/if}
+  </div>
   {#if fileRequested}
     {#if isTextfile}
       <FilePage />
@@ -151,7 +158,6 @@ const download = async (e) => {
       <FileDownload  />
     {/if}
   {:else}
-  
     <FileList on:file-click={fileClick}  />
   {/if}
 {:else} 
@@ -159,7 +165,32 @@ const download = async (e) => {
 {/if}
 
 <style>
-
+.progress {
+  height: 8px;
+  /* display: block;
+  width: auto; */
+  margin: 15px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  /* border: 1px solid white; */
+}
+progress {
+  height: 4px;
+  display: block;
+  width: auto;
+  /* border-radius: 1px; */
+  border: 0;
+  padding: 0;
+}
+progress::-webkit-progress-value {
+  background: #01579b;
+  border-top-left-radius: 1px;
+  border-bottom-left-radius: 1px;
+}
+/* Background - webkit browsers */
+progress::-webkit-progress-bar {
+  background: #fff;
+}
 
 </style>
 

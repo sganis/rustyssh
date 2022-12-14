@@ -1,4 +1,7 @@
 import { writable } from "svelte/store";
+import { tweened } from 'svelte/motion';
+import { cubicOut } from 'svelte/easing';
+
 
 export const CurrentPath = writable("");
 export const FileStore = writable([]);
@@ -11,4 +14,10 @@ export const UserStore = writable({
   isConnected: false,
   isConnecting: false,
   needPassword: false,
+});
+// export const Progress = writable(0);
+
+export const Progress = tweened(0, {
+  duration: 100,
+  easing: cubicOut
 });

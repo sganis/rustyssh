@@ -17,7 +17,7 @@ pub struct Ssh {
 
 #[derive(Clone, serde::Serialize)]
 struct Payload {
-    percent: i32,
+    percent: f32,
 }
 
 #[allow(dead_code)]
@@ -251,6 +251,7 @@ impl Ssh {
         let mut f = BufWriter::new(f);
         let mut buffer = [0; 16000];
         let mut count = 0;
+        let mut prev_percent = 0;
         loop {
             match channel.read(&mut buffer[..]) {
                 Err(e) => {
@@ -265,13 +266,18 @@ impl Ssh {
                         f.write(&buffer[..n]).unwrap();
                         count += n;
                     }
-                    let percent = ((count as f64/size as f64) * 100.0)  as i32;
-                    window.emit("PROGRESS", Payload { percent }).unwrap();
-                    // println!("written: {count}/{size} {percent}%")
+                    // report progress
+                    let percent = ((count as f64/size as f64) * 100.)  as i32;
+                    if prev_percent != percent {
+                        let p = percent as f32 / 100.;
+                        window.emit("PROGRESS", Payload { percent: p }).unwrap();
+                        prev_percent = percent;
+                    }
                 }
             }
         }
         println!("written: {count}");
+        window.emit("PROGRESS", Payload { percent: 0. }).unwrap();                        
         Ok("done".to_string())
     }
 }
