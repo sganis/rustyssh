@@ -144,7 +144,8 @@ impl Ssh {
         for addr in addresses {
             match TcpStream::connect_timeout(&addr, timeout) {
                 Err(e) => {
-                    error.push_str(&format!("tcp error: {:?}\n", e));
+                    //error.push_str(&format!("tcp error: {:?}\n", e));
+                    error = String::from(&format!("tcp error: {:?}", e));
                     continue;
                 },
                 Ok(o) => {

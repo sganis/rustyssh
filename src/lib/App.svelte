@@ -2,9 +2,13 @@
 // @ts-nocheck
 
 import { invoke } from "@tauri-apps/api/tauri"
+import { getVersion } from '@tauri-apps/api/app';
+import { downloadDir } from '@tauri-apps/api/path';
+
 import {FileStore, PageStore, 
   UserStore, CurrentPath, 
   Message, Error, Progress} from '../js/store'
+
 import {sleep, getParent} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
@@ -26,6 +30,10 @@ $: isTextfile = $PageStore !== "Binary file";
   Progress.set(payload.percent);
 })
 })();
+
+const appVersion = async () => {
+  return await getVersion();
+}
 
 const fileClick = async (e) => {
     const file = e.detail;
@@ -61,7 +69,7 @@ const login = async (e) => {
       } catch (ex) {
         console.log(ex);
         $UserStore.needPassword = true;
-        $Error = `${ex}<br/>Need passowrd`;
+        $Error = ex;
       }
     } else {
       try {
@@ -125,15 +133,16 @@ const goUp = async (e) => {
   await getFiles(path);
 }
 const download = async (e) => {
-  //const remotepath = e.detail;
-  const remotepath = "/usr.tar";
-  const localpath = "C:\\Users\\san\\usr.tar";
+  const remotepath = e.detail;
+  const filename = remotepath.substr(remotepath.lastIndexOf('/') + 1);
+  const downloadFolder = await downloadDir();
   try {
+      const localpath = `${downloadFolder}\\${filename}`;
       const r = await invoke("download", { remotepath, localpath, window: appWindow});
       const js = JSON.parse(r);
  
-    } catch (e) {
-      console.log(e)
+    } catch (ex) {
+      console.log(ex)
     }
 }
 

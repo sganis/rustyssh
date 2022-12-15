@@ -4,9 +4,7 @@ import {PageStore} from '../js/store'
 </script>
 
 <div class="top border">
-    <textarea>
-    {$PageStore}
-    </textarea>
+    <textarea spellcheck="false">{$PageStore}</textarea>
 </div>
 
 <style>
@@ -16,7 +14,7 @@ import {PageStore} from '../js/store'
     margin-top: 0px;
 }
 textarea {
-    margin: 0;
+    /* margin: 0; */
     padding: 10px;
     border: 0;
     height: 100%;
