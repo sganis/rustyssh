@@ -2,11 +2,11 @@
 // @ts-nocheck
 
 import { invoke } from "@tauri-apps/api/tauri"
-import { getVersion } from '@tauri-apps/api/app';
-import { downloadDir } from '@tauri-apps/api/path';
+import { downloadDir, appDataDir } from '@tauri-apps/api/path';
+import { open } from '@tauri-apps/api/dialog';
 
 import {FileStore, PageStore, 
-  UserStore, CurrentPath, 
+  UserStore, CurrentPath, FileRequested, NewFolderName,
   Message, Error, Progress} from '../js/store'
 
 import {sleep, getParent} from "../js/util.js";
@@ -16,10 +16,12 @@ import FilePage from "$lib/FilePage.svelte";
 import FileDownload from "$lib/FileDownload.svelte";
 import Login from "./Login.svelte";
 import { appWindow } from '@tauri-apps/api/window';
-import { emit, listen } from '@tauri-apps/api/event'
+import { listen } from '@tauri-apps/api/event'
+import Modal from "./Modal.svelte";
 
-
-let fileRequested = false;
+let isDownloading = false;
+let isUploading = false;
+let showNewFolder = false;
 
 $: totalFiles = $FileStore.length;
 $: isTextfile = $PageStore !== "Binary file";
@@ -31,18 +33,14 @@ $: isTextfile = $PageStore !== "Binary file";
 })
 })();
 
-const appVersion = async () => {
-  return await getVersion();
-}
-
 const fileClick = async (e) => {
     const file = e.detail;
     if (file.is_dir) {
       await getFiles(file.path)
-      fileRequested = false;
+      $FileRequested = false;
     } else {
       await getPage(file.path, 1, 100)
-      fileRequested = true;
+      $FileRequested = true;
     }
 }
 const login = async (e) => {
@@ -121,7 +119,7 @@ const getPage = async (path, page, recordsPerPage) => {
       const js = JSON.parse(r);
       console.log(js);
       $PageStore = js; 
-      fileRequested = true;    
+      $FileRequested = true;    
     } catch (e) {
       console.log(e)
     }
@@ -129,35 +127,77 @@ const getPage = async (path, page, recordsPerPage) => {
 const goUp = async (e) => {
   const path = getParent(e.detail);
   console.log('going up to ', path)
-  fileRequested = false;
+  $FileRequested = false;
   await getFiles(path);
 }
 const download = async (e) => {
+  isDownloading = true;
   const remotepath = e.detail;
   const filename = remotepath.substr(remotepath.lastIndexOf('/') + 1);
   const downloadFolder = await downloadDir();
   try {
-      const localpath = `${downloadFolder}\\${filename}`;
-      const r = await invoke("download", { remotepath, localpath, window: appWindow});
-      const js = JSON.parse(r);
- 
-    } catch (ex) {
-      console.log(ex)
-    }
+    let path = `${downloadFolder}${filename}`;
+    const new_filename = await invoke("get_new_filename", { path });
+    const localpath = `${downloadFolder}\\${new_filename}`;
+    await invoke("download", { remotepath, localpath, window: appWindow});
+    //const js = JSON.parse(r);
+  } catch (ex) {
+    console.log(ex)
+  }
+  isDownloading = false;
 }
+const upload = async (e) => {
+  isUploading = true;
+  let remotepath = e.detail;
+  const localpath = await open({
+    defaultPath: await appDataDir()
+  });
+  console.log(localpath);
+  try {
+    //const new_filename = await invoke("get_new_filename", { path });
+    let filename = localpath.substr(localpath.lastIndexOf('\\') + 1);
+    remotepath = `${remotepath}/${filename}`
+    await invoke("upload", { localpath, remotepath, window: appWindow});
+    await getFiles($CurrentPath);
+  } catch (ex) {
+    console.log(ex)
+  }
+  isUploading = false;
+}
+const newFolderDialog = async (e) => {
+  let remotepath = e.detail;
+  showNewFolder = true;
+}
+const newFolder = async () => {
+  let parent = $CurrentPath;
+  let name = $NewFolderName;
+  let remotepath = `${parent}/${name}`
+  console.log(remotepath)
+  showNewFolder = false;
+  try {
+    await invoke("mkdir", { remotepath });
+    await getFiles($CurrentPath);
+  } catch (ex) {
+    console.log(ex)
+  }
+  isUploading = false;
+}
+
 
 </script>
 
 
 
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
-  <FileBar {totalFiles} on:go-up={goUp} on:download={download}/>
+  <FileBar {totalFiles} {isDownloading} {isUploading}
+    on:go-up={goUp} on:download={download} 
+    on:upload={upload} on:new-folder-dialog={newFolderDialog}/>
   <div class="progress">
-  {#if $Progress > 0 }
+  {#if $Progress > 0 && $Progress < 1.0 }
     <progress value={$Progress} />
   {/if}
   </div>
-  {#if fileRequested}
+  {#if $FileRequested}
     {#if isTextfile}
       <FilePage />
     {:else}
@@ -169,6 +209,18 @@ const download = async (e) => {
 {:else} 
   <Login on:login={login} />
 {/if}
+
+{#if showNewFolder}
+	<Modal on:close="{newFolder}" >
+    <p>Folder name:</p>
+    <input bind:value={$NewFolderName}/>
+    <br/>
+    <br/>
+  </Modal>
+
+{/if}
+
+
 
 <style>
 .progress {

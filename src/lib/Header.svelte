@@ -1,8 +1,19 @@
 <script>
     import { invoke } from "@tauri-apps/api/tauri"
+    import { getVersion } from '@tauri-apps/api/app';
+    import {onMount} from 'svelte';
     import {UserStore} from '../js/store'
     import logo from '../assets/logo.png'
-    export let version = 'v1.0'
+
+    let version = '';
+
+    const appVersion = async () => {
+      return await getVersion();
+    }
+
+    onMount(async () => {
+      version = await appVersion();
+    })
 
     const logout = async () => {
     try {
@@ -13,14 +24,16 @@
     } catch (e) {
       console.log(e);
     }
+
   };
 
 </script>
 
 <div class="header">
   <img src={logo} alt="logo"/>
-  <h1 class="title">Rusty {version}</h1>
+  <h1 class="title">Rusty</h1>
   <div class="w100"></div>
+  <div>v{version}</div>
   {#if $UserStore.isConnected}
     <div>{$UserStore.user}@{$UserStore.server}</div>
     <!-- svelte-ignore a11y-invalid-attribute -->

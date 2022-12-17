@@ -1,14 +1,15 @@
 use std::fs::File;
-use std::io::{Read, Write, BufWriter};
+use std::io::{Read, BufReader, Write, BufWriter};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
-use ssh2::Session;
+use ssh2::{Session, Sftp, FileStat};
 use std::path::{PathBuf, Path};
 use super::command;
 
 #[derive(Default)]
 pub struct Ssh {
     session : Option<Session>,
+    sftp : Option<Sftp>,
     host : String,
     user : String,
     password : String,
@@ -182,7 +183,13 @@ impl Ssh {
         }
 
         assert!(session.authenticated());
+        let sftp = match session.sftp() {
+            Err(e) => return Err(format!("Cannot create sftp channel {e}")),
+            Ok(o) => o,
+        };
+
         self.session = Some(session);
+        self.sftp = Some(sftp);
         self.host = host.to_string();
         self.user = user.to_string();
         self.password = password.to_string();
@@ -208,7 +215,14 @@ impl Ssh {
         }
 
         assert!(session.authenticated());
+
+        let sftp = match session.sftp() {
+            Err(e) => return Err(format!("Cannot create sftp channel {e}")),
+            Ok(o) => o,
+        };
+
         self.session = Some(session);
+        self.sftp = Some(sftp);
         self.host = host.to_string();
         self.user = user.to_string();
         self.private_key = pkey.to_string();
@@ -236,10 +250,7 @@ impl Ssh {
         channel.wait_close().unwrap();
         Ok(s.trim().to_string())
     }
-    pub fn download(&mut self, 
-        remotepath: &str, 
-        localpath: &str, 
-        window: tauri::Window) -> Result<String, String> {
+    pub fn scp_download(&mut self, remotepath: &str, localpath: &str, window: tauri::Window) -> Result<String, String> {
         println!("downloading: {remotepath}");
         let (mut channel, stat) = match self.session.as_ref().unwrap()
             .scp_recv(Path::new(remotepath)) {
@@ -280,6 +291,85 @@ impl Ssh {
         println!("written: {count}");
         window.emit("PROGRESS", Payload { percent: 0. }).unwrap();                        
         Ok("done".to_string())
+    }
+    pub fn scp_upload(&mut self, localpath: &str, remotepath: &str, window: tauri::Window) -> Result<String, String> {
+        println!("uploading: {localpath} to {remotepath}");
+        let size = std::fs::metadata(localpath).unwrap().len();
+        let mut channel = match self.session.as_ref().unwrap()
+            .scp_send(Path::new(remotepath), 0o644, size, None) {
+            Err(e) => return Err(format!("Cannot open scp channel: {}", e)),
+            Ok(o) => o,
+        };
+        println!("file size: {}", size);
+        let f = File::open(localpath).expect("Unable to open file");
+        let mut f = BufReader::new(f);
+        let mut buffer = [0; 16000];
+        let mut count = 0;
+        let mut prev_percent = 0;
+        loop {
+            let n = f.read(&mut buffer).unwrap();
+            match channel.write(&buffer[..n]) {
+                Err(e) => {
+                    println!("error: {:?}", e);
+                    return Err(e.to_string())
+                },
+                Ok(n) => {
+                    count += n;
+                    if n < 16000 {
+                        break;
+                    }                    
+                }
+            }
+            // report progress
+            let percent = ((count as f64/size as f64) * 100.)  as i32;
+            if prev_percent != percent {
+                let p = percent as f32 / 100.;
+                window.emit("PROGRESS", Payload { percent: p }).unwrap();
+                prev_percent = percent;
+            }
+        }
+        
+        println!("written: {count}");
+        window.emit("PROGRESS", Payload { percent: 0. }).unwrap();                        
+        Ok("done".to_string())
+    }
+    pub fn sftp_stat(&mut self, filename: &str) -> Result<FileStat, String> {
+        match self.sftp.as_ref().unwrap().lstat(Path::new(filename)) {
+            Err(e) => Err(format!("Cannot stat {filename}: {e}")),
+            Ok(o) => Ok(o)
+        }
+    }
+    pub fn sftp_mkdir(&mut self, dirname: &str) -> Result<(), String> {
+        match self.sftp.as_ref().unwrap().mkdir(Path::new(dirname), 0o755) {
+            Err(e) => Err(format!("Cannot make dir {dirname}: {e}")),
+            Ok(_) => Ok(())
+        }
+    }
+    pub fn sftp_rmdir(&mut self, dirname: &str) -> Result<(), String> {
+        match self.sftp.as_ref().unwrap().rmdir(Path::new(dirname)) {
+            Err(e) => Err(format!("Cannot delete dir {dirname}: {e}")),
+            Ok(_) => Ok(())
+        }
+    }
+    pub fn sftp_create(&mut self, filename: &str) -> Result<ssh2::File, String> {
+        let f = match self.sftp.as_ref().unwrap().create(Path::new(filename)) {
+            Err(e) => return Err(format!("Cannot create file {filename}: {e}")),
+            Ok(o) => o,
+        };
+        Ok(f)
+    }
+    pub fn sftp_open(&mut self, filename: &str) -> Result<ssh2::File, String> {
+        let f = match self.sftp.as_ref().unwrap().open(Path::new(filename)) {
+            Err(e) => return Err(format!("Cannot open file {filename}: {e}")),
+            Ok(o) => o,
+        };
+        Ok(f)
+    }
+    pub fn sftp_delete(&mut self, filename: &str) -> Result<(), String> {
+        match self.sftp.as_ref().unwrap().unlink(Path::new(filename)) {
+            Err(e) => Err(format!("Cannot delete {filename}: {e}")),
+            Ok(_) => Ok(())
+        }
     }
 }
 
@@ -378,5 +468,31 @@ mod tests {
     #[test]
     fn supported_algs() {
         println!("{}",Ssh::supported_algs());
+    }
+    #[test]
+    fn mkdir_rmdir() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        assert!(r.is_ok());
+        assert!(ssh.sftp_stat( "/home/support").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/folder").is_err());
+        assert!(ssh.sftp_mkdir("/home/support/folder").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/folder").is_ok());
+        assert!(ssh.sftp_rmdir("/home/support/folder").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/folder").is_err());
+        
+    }
+    #[test]
+    fn create_delete() {
+        let mut ssh = Ssh::new();
+        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        assert!(r.is_ok());
+        assert!(ssh.sftp_stat( "/home/support").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file").is_err());
+        assert!(ssh.sftp_create("/home/support/file").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file").is_ok());
+        assert!(ssh.sftp_delete("/home/support/file").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file").is_err());
+        
     }
 }

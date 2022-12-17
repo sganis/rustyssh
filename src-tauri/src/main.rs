@@ -6,6 +6,7 @@
 mod settings;
 mod ssh;
 mod command;
+mod util;
 
 use tauri::Window;
 use settings::Settings;
@@ -113,11 +114,15 @@ async fn setup_ssh(settings: Settings) -> Result<(), String> {
     ssh::Ssh::setup_ssh(host, port, user, password)
 }
 
-
 #[tauri::command]
 async fn ssh_run(command: String, app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     ssh.run(&command)
+}
+
+#[tauri::command]
+async fn get_new_filename(path: String) -> Result<String, String> {
+    Ok(util::new_filename(&path))
 }
 
 #[tauri::command]
@@ -241,7 +246,7 @@ async fn download(
     window: Window, 
     app: State<'_, App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
-    match ssh.download(&remotepath, &localpath, window) {
+    match ssh.scp_download(&remotepath, &localpath, window) {
         Err(e) => Err(e),
         Ok(o) => {
             println!("file saved to: {localpath}");
@@ -252,22 +257,43 @@ async fn download(
 
 
 #[tauri::command]
-async fn upload(path: String, app: State<'_,App>) -> Result<String, String> {
+async fn upload(
+    localpath: String,
+    remotepath: String, 
+    window: Window,
+    app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
-    // if let Err(e) = match ssh.download(&path) {
-    //     return Err(format!("Failed to download file {}: {}", path, e));
-    // }
-
-    // let (mut remote_file, stat) = ssh.scp_recv(Path::new("/home/support/file.txt")).unwrap();
-    // println!("remote file size: {}", stat.size());
-    // let mut content = Vec::new();
-    // remote_file.read_to_end(&mut content).unwrap();
-    // let path = "file.txt";
-    // let file = OpenOptions::new().write(true).open("file.txt")?;
-    // file.write_all(&content);
-    // println!("file saved to: {path}");
-    Ok(String::new())
+    match ssh.scp_upload(&localpath, &remotepath, window) {
+        Err(e) => Err(e),
+        Ok(o) => {
+            println!("file uploaded to: {remotepath}");
+            Ok(serde_json::to_string(&o).unwrap())
+        },
+    }
 }
+#[tauri::command]
+async fn mkdir(remotepath: String, app: State<'_,App>) -> Result<String, String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    match ssh.sftp_mkdir(&remotepath) {
+        Err(e) => Err(e),
+        Ok(o) => {
+            println!("new folder created: {remotepath}");
+            Ok(serde_json::to_string(&o).unwrap())
+        },
+    }
+}
+#[tauri::command]
+async fn rmdir(remotepath: String, app: State<'_,App>) -> Result<String, String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    match ssh.sftp_rmdir(&remotepath) {
+        Err(e) => Err(e),
+        Ok(o) => {
+            println!("folder deleted: {remotepath}");
+            Ok(serde_json::to_string(&o).unwrap())
+        },
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(App {..Default::default() })
@@ -280,9 +306,13 @@ fn main() {
             setup_ssh,
             ssh_run,
             get_files,
+            get_new_filename,
             get_page,
             download,
             upload,
+            mkdir,
+            rmdir,
+            
         ])
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .run(tauri::generate_context!())

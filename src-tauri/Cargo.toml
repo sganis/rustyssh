@@ -8,6 +8,12 @@ repository = "https://github.com/sganis/rustyssh.git"
 edition = "2021"
 rust-version = "1.57"
 
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+panic = "abort"
+
 [build-dependencies]
 tauri-build = {version = "1.2", features = [] }
 

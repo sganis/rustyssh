@@ -7,7 +7,7 @@
 </script>
 
 <main class="full">
-  <Header version=""/>
+  <Header />
   <slot />
   <Footer />
 </main>

@@ -8,11 +8,15 @@
   },
   "package": {
     "productName": "Rustyssh",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "tauri": {
     "allowlist": {
-      "all": true
+      "all": true,
+      "dialog": {
+        "all": true,
+        "open": true
+      }
     },
     "bundle": {
       "active": true,
@@ -29,7 +33,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "com.tauri.rustyssh",
+      "identifier": "Rustyssh",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
