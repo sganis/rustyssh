@@ -31,3 +31,4 @@ dist-ssr
 !.env.example
 yarn.lock
 .vscode
+vendor/
