@@ -49,7 +49,7 @@
           />
           <div class="login-button">
             <div class="w100"></div>          
-            <button type="submit" class="btn-primary" 
+            <button type="submit" class="btn btn-light border" 
               disabled={$UserStore.isConnecting}>
               Connect
             </button>

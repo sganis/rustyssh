@@ -25,6 +25,7 @@ let showNewFolder = false;
 
 $: totalFiles = $FileStore.length;
 $: isTextfile = $PageStore !== "Binary file";
+$: prog = parseInt($Progress * 100);
 
 (async () => {
   const unlisten = await listen('PROGRESS', ({payload}) => {
@@ -192,11 +193,12 @@ const newFolder = async () => {
   <FileBar {totalFiles} {isDownloading} {isUploading}
     on:go-up={goUp} on:download={download} 
     on:upload={upload} on:new-folder-dialog={newFolderDialog}/>
-  <div class="progress">
+  <div class="progress progress-wrap">
   {#if $Progress > 0 && $Progress < 1.0 }
-    <progress value={$Progress} />
+      <div class="progress-bar" style:width="{prog}%"/>
   {/if}
   </div>
+  <div class="path">{$CurrentPath}</div>
   {#if $FileRequested}
     {#if isTextfile}
       <FilePage />
@@ -223,32 +225,38 @@ const newFolder = async () => {
 
 
 <style>
-.progress {
+.path {
+  margin: 15px;
+  margin-top: 0px;
+  margin-bottom: 5px;
+}
+.progress-wrap {
   height: 8px;
-  /* display: block;
-  width: auto; */
   margin: 15px;
   margin-top: 5px;
   margin-bottom: 5px;
-  /* border: 1px solid white; */
 }
-progress {
-  height: 4px;
+.progress-bar {
+  background: darkblue;
+}
+/*
+.progress {
   display: block;
   width: auto;
-  /* border-radius: 1px; */
   border: 0;
   padding: 0;
-}
+} 
+*/
+/*
 progress::-webkit-progress-value {
   background: #01579b;
   border-top-left-radius: 1px;
   border-bottom-left-radius: 1px;
 }
-/* Background - webkit browsers */
+
 progress::-webkit-progress-bar {
   background: #fff;
-}
+} */
 
 </style>
 
