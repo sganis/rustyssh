@@ -21,7 +21,11 @@ import Modal from "./Modal.svelte";
 
 let isDownloading = false;
 let isUploading = false;
-let showNewFolder = false;
+let showNewFolderModal = false;
+let showDeleteModal = false;
+
+let newFolderName = "";
+let fileToDelete = "";
 
 $: totalFiles = $FileStore.length;
 $: isTextfile = $PageStore !== "Binary file";
@@ -34,16 +38,6 @@ $: prog = parseInt($Progress * 100);
 })
 })();
 
-const fileClick = async (e) => {
-    const file = e.detail;
-    if (file.is_dir) {
-      await getFiles(file.path)
-      $FileRequested = false;
-    } else {
-      await getPage(file.path, 1, 100)
-      $FileRequested = true;
-    }
-}
 const login = async (e) => {
     let args = e.detail
     console.log(args)
@@ -165,16 +159,27 @@ const upload = async (e) => {
   }
   isUploading = false;
 }
-const newFolderDialog = async (e) => {
-  let remotepath = e.detail;
-  showNewFolder = true;
+const fileClick = async (e) => {
+    const file = e.detail;
+    if (file.is_dir) {
+      await getFiles(file.path)
+      $FileRequested = false;
+    } else {
+      await getPage(file.path, 1, 100)
+      $FileRequested = true;
+    }
 }
-const newFolder = async () => {
+const newFolder = async (action) => {
+  if (!action) {
+    showNewFolderModal = false;
+    return;
+  }
+
   let parent = $CurrentPath;
-  let name = $NewFolderName;
+  let name = newFolderName;
   let remotepath = `${parent}/${name}`
   console.log(remotepath)
-  showNewFolder = false;
+  showNewFolderModal = false;
   try {
     await invoke("mkdir", { remotepath });
     await getFiles($CurrentPath);
@@ -183,7 +188,26 @@ const newFolder = async () => {
   }
   isUploading = false;
 }
-
+const fileDelete = async (e) => {
+    const file = e.detail;
+    console.log('deleting '+file.path)
+    try {
+      await invoke("delete", { remotepath:file.path });
+      await getFiles($CurrentPath);
+    } catch (ex) {
+      console.log(ex)
+    }
+}
+const fileRename = async (e) => {
+    const file = e.detail;
+    console.log('renaming '+file.path)
+    try {
+      await invoke("rename", { remotepath:file.path });
+      await getFiles($CurrentPath);
+    } catch (ex) {
+      console.log(ex)
+    }
+}
 
 </script>
 
@@ -191,8 +215,10 @@ const newFolder = async () => {
 
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
   <FileBar {totalFiles} {isDownloading} {isUploading}
-    on:go-up={goUp} on:download={download} 
-    on:upload={upload} on:new-folder-dialog={newFolderDialog}/>
+    on:go-up={goUp} 
+    on:download={download} 
+    on:upload={upload} 
+    on:new-folder={()=> showNewFolderModal=true}/>
   <div class="progress progress-wrap">
   {#if $Progress > 0 && $Progress < 1.0 }
       <div class="progress-bar" style:width="{prog}%"/>
@@ -206,21 +232,24 @@ const newFolder = async () => {
       <FileDownload  />
     {/if}
   {:else}
-    <FileList on:file-click={fileClick}  />
+    <FileList 
+      on:file-click={fileClick}  
+      on:file-delete={fileDelete} 
+      on:file-rename={fileRename}/>
   {/if}
 {:else} 
   <Login on:login={login} />
 {/if}
 
-{#if showNewFolder}
-	<Modal on:close="{newFolder}" >
-    <p>Folder name:</p>
-    <input bind:value={$NewFolderName}/>
-    <br/>
-    <br/>
-  </Modal>
+<Modal open={showNewFolderModal} onClosed={(action) => newFolder(action)}
+  title="New folder">
+  <input bind:value={newFolderName} />
+</Modal>
+<Modal open={showDeleteModal} onClosed={(action) => fileDelete(action)}
+  title="Delete {fileToDelete}">
+</Modal>
 
-{/if}
+
 
 
 
@@ -239,24 +268,6 @@ const newFolder = async () => {
 .progress-bar {
   background: darkblue;
 }
-/*
-.progress {
-  display: block;
-  width: auto;
-  border: 0;
-  padding: 0;
-} 
-*/
-/*
-progress::-webkit-progress-value {
-  background: #01579b;
-  border-top-left-radius: 1px;
-  border-bottom-left-radius: 1px;
-}
-
-progress::-webkit-progress-bar {
-  background: #fff;
-} */
 
 </style>
 

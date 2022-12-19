@@ -1,78 +1,63 @@
 <script>
 // @ts-nocheck
 
-import { createEventDispatcher, onDestroy } from 'svelte';
-
-const dispatch = createEventDispatcher();
-const close = () => dispatch('close');
-
-let modal;
-
-const handle_keydown = e => {
-	if (e.key === 'Escape') {
-		close();
-		return;
+	import { fade, fly } from "svelte/transition";
+	//import { quintOut } from "svelte/easing";
+  
+	export let open = false;
+	export let showBackdrop = true;
+	export let onClosed;
+	export let title = 'Modal title';
+  
+	const modalClose = (data) => {
+	  open = false;
+	  if (onClosed) {
+		onClosed(data);
+	  }
 	}
-
-	if (e.key === 'Tab') {
-		// trap focus
-		const nodes = modal.querySelectorAll('*');
-		const tabbable = Array.from(nodes).filter(n => n.tabIndex >= 0);
-
-		let index = tabbable.indexOf(document.activeElement);
-		if (index === -1 && e.shiftKey) index = 0;
-
-		index += tabbable.length + (e.shiftKey ? -1 : 1);
-		index %= tabbable.length;
-
-		tabbable[index].focus();
-		e.preventDefault();
+  
+  </script>
+  
+  {#if open}
+	<div class="modal" id="sampleModal" tabindex="-1" role="dialog" 
+	aria-labelledby="sampleModalLabel" aria-hidden={false}>
+	  <div class="modal-dialog" role="document" >
+		<div class="modal-content">
+		  <div class="modal-header">
+			<h5 class="modal-title">{title}</h5>
+			<button type="button" class="close" data-dismiss="modal"
+			  on:click={() => modalClose()}>
+			  <i class="bi-x"/>
+			</button>
+		  </div>
+		  <div class="modal-body">
+			<slot></slot>
+		  </div>
+		  <div class="modal-footer">
+			<button type="button" class="btn btn-light button" data-dismiss="modal" 
+			on:click={() => modalClose(false)}>Cancel</button>
+			<button type="button" class="btn btn-primary button" 
+			on:click={() => modalClose(true)}>Ok</button>
+		  </div>
+		</div>
+	  </div>
+	</div>
+	{#if showBackdrop}
+	<div class="modal-backdrop show" transition:fade={{ duration: 50 }} />
+	{/if}
+  {/if}
+  
+  <style>
+	.modal {
+	  display: block;
 	}
-};
-
-const previously_focused = typeof document !== 'undefined' && document.activeElement;
-
-if (previously_focused) {
-	onDestroy(() => {
-		previously_focused.focus();
-	});
-}
-</script>
-
-<svelte:window on:keydown={handle_keydown}/>
-
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="modal-background" on:click={close}></div>
-<div class="modal" role="dialog" aria-modal="true" bind:this={modal}>
-	<slot></slot>
-	<button on:click={close}>Ok</button>
-</div>
-
-<style>
-.modal-background {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: rgba(0,0,0,0.3);
-}
-
-.modal {
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	width: calc(100vw - 4em);
-	max-width: 32em;
-	max-height: calc(100vh - 4em);
-	overflow: auto;
-	transform: translate(-50%,-50%);
-	padding: 1em;
-	border-radius: 0.2em;
-	background: white;
-}
-
-button {
-	display: block;
-}
-</style>
+	.close {
+		text-align: center;
+		width: 24px;
+		padding: 0;
+		margin: 0;
+	}
+	.button {
+		width: 100px;
+	}
+  </style>

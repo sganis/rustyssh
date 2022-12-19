@@ -95,21 +95,35 @@ button:disabled {
 input:disabled::-webkit-input-placeholder {
   color: #bbb;
 } */
-input, button {
+
+input,
+button {
   outline: none;
   border: 1px solid gainsboro;
 }
-.card, .btn, .form-control, .dropdown, .dropdown-menu, .dropdown-toggle { 
-  border-radius: 0; 
+
+.card,
+.btn,
+.form-control,
+.dropdown,
+.dropdown-menu,
+.dropdown-toggle {
+  border-radius: 0;
 }
+
 .scrollable {
-  overflow-y: auto; 
-  height: 100vh; 
+  overflow-y: auto;
+  height: 100vh;
   scrollbar-gutter: stable;
   margin: 15px;
   margin-top: 0px;
-  padding: 10px; 
+  padding: 10px;
 }
+
+.lp10 {
+  padding-right: 10px;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;

@@ -51,7 +51,7 @@
             <div class="w100"></div>          
             <button type="submit" class="btn btn-light border" 
               disabled={$UserStore.isConnecting}>
-              Connect
+              <i class="bi-power lp10"></i>Connect
             </button>
           </div>
         

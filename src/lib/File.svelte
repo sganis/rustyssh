@@ -1,13 +1,13 @@
 <script>
 // @ts-nocheck
 
-import { invoke } from "@tauri-apps/api/tauri"
 import {createEventDispatcher} from 'svelte'
+import {Dropdown, DropdownItem, DropdownMenu, DropdownToggle, } from 'sveltestrap';
 import folderIcon from "../assets/folder.png";
 import folderLinkIcon from "../assets/folder-link.png";
 import fileIcon from "../assets/file.png";
 import fileLinkIcon from "../assets/file-link.png";
-import {FileStore, CurrentPath} from '../js/store'
+import {CurrentPath} from '../js/store'
 import {humanFileSize} from '../js/util'
 
 export let file = {};
@@ -15,10 +15,14 @@ export let file = {};
 const dispatch = createEventDispatcher();
 
 const fileClick = (file) => {
-    //dispatch('clear-selection');
-    //file.selected = !file.selected;
     $CurrentPath = file.path;
     dispatch('file-click', file);
+}
+const fileDelete = (file) => {
+    dispatch('file-delete', file);
+}
+const fileRename = (file) => {
+    dispatch('file-rename', file);
 }
 
 const filesize = () => {
@@ -31,18 +35,31 @@ const filemodified = () => {
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class="file" class:selected={$CurrentPath===file.path} 
-    on:click={() => fileClick(file)}>
+<div class="file" class:selected={$CurrentPath===file.path} >
     <img class="icon" 
         src={file.is_dir && !file.is_link ? folderIcon 
             : file.is_dir && file.is_link ? folderLinkIcon
             : !file.is_dir && file.is_link ? fileLinkIcon 
             : fileIcon}
         alt="file icon" />
-    <span class="filename"> {file.is_link ? `${file.name} => ${file.link_path}` 
-                                        : file.name}</span>
+    <span class="filename" on:click={() => fileClick(file)}> 
+        {file.is_link ? `${file.name} => ${file.link_path}` : file.name}</span>
     <span class="filesize">{filesize()}</span>
     <span class="filemodified">{filemodified()}</span> 
+    <span>
+        <Dropdown>
+            <DropdownToggle class="btn btn-light">
+                <i class="bi-three-dots"/></DropdownToggle>
+          <DropdownMenu>
+            <!-- <DropdownItem header>{file.name}</DropdownItem> -->
+            <DropdownItem on:click={()=> fileDelete(file)}>
+                <i class="bi-trash lp10"/>Delete</DropdownItem>
+            <DropdownItem on:click={()=> fileRename(file)}>
+                <i class="bi-pencil lp10"/>Rename</DropdownItem>
+                
+          </DropdownMenu>
+        </Dropdown>
+    </span>
 </div>
 
 <style>

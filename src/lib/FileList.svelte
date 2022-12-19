@@ -20,12 +20,12 @@ $: hasParent = $CurrentPath !== "/";
 
 </script>
 <div class="scrollable border">   
-    {#if hasParent}
+    <!-- {#if hasParent}
       <File file={parent} on:file-click />
-    {/if}
+    {/if} -->
     {#each $FileStore as file(file.path)}
       <!-- <div in:fade="{{duration:500}}" > -->
-      <File {file} on:file-click />
+      <File {file} on:file-click on:file-delete on:file-rename/>
     {/each}
     {#if $Error}
       <ErrorBox />
