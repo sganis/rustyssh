@@ -22,7 +22,7 @@ jobs:
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: './src-tauri -> target'
+          workspaces: "./src-tauri -> target"
       # - uses: actions/cache@v3
       #   with:
       #     path: |
@@ -31,16 +31,32 @@ jobs:
       #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - if: ${{ matrix.in-linux }}
-        run: sudo apt-get install -y libwebkit2gtk-4.0-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+        run: |
+          sudo apt-get install -y libwebkit2gtk-4.0-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+          adduser support --gecos "First,Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
+          echo 'support:support' | chpasswd
+          usermod -aG sudo support
+          echo -e "support\tALL=(ALL)\tNOPASSWD: ALL" > /etc/sudoers.d/support 2>/dev/null
+          chmod 0755 /etc/sudoers.d/support
+          apt-get update
+          apt-get remove -y -qq --purge openssh-server `> /dev/null
+          apt-get install -y -qq openssh-server `> /dev/null
+          service ssh --full-restart
+
       - run: yarn
       # - run: yarn tauri build -d -b none
+      - if: ${{ matrix.in-linux }}
+        run: |
+          cd src-tauri
+          cargo test
+
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: v__VERSION__
-          releaseName: 'Rustyssh v__VERSION__' # tauri-action replaces \_\_VERSION\_\_ with the app version.
-          releaseBody: 'See the assets to download and install this version.'
+          releaseName: "Rustyssh v__VERSION__" # tauri-action replaces \_\_VERSION\_\_ with the app version.
+          releaseBody: "See the assets to download and install this version."
           releaseDraft: true
           prerelease: false
