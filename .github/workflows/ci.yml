@@ -42,6 +42,7 @@ jobs:
           apt-get remove -y -qq --purge openssh-server `> /dev/null
           apt-get install -y -qq openssh-server `> /dev/null
           service ssh --full-restart
+          python3 setupssh.py support@localhost support
 
       - run: yarn
       # - run: yarn tauri build -d -b none
