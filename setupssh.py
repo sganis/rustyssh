@@ -1,5 +1,5 @@
-# Golddrive
-# 09/08/2018, San
+# Rustyssh
+# 12/21/2022, San
 # setup ssh keys
 
 import os
@@ -9,8 +9,13 @@ import subprocess
 import re
 import time
 from enum import Enum
+import platform
 
-logger = logging.getLogger('golddrive')
+is_win = platform.system() == 'Windows'
+if is_win:
+	import shlex
+
+logger = logging.getLogger('rustyssh')
 logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 
 DIR = os.path.dirname(os.path.realpath(__file__))
@@ -70,8 +75,10 @@ def run(cmd, capture=False, detach=False, shell=True, timeout=30):
 	return r
 	
 def get_app_key(user):
-
-	return f'{ os.path.expandvars("%USERPROFILE%") }\\.ssh\\id_rsa'
+	if is_win:
+		return f'{ os.path.expandvars("%USERPROFILE%") }\\.ssh\\id_rsa'
+	else:
+		return f'{ os.path.expandvars("$HOME") }/.ssh/id_rsa'
 	
 def testhost(userhost, port=22):
 	'''
@@ -111,8 +118,9 @@ def testssh(userhost, port=22):
 		return rb
 	
 	if not os.path.exists(seckey):
-		seckey_win = seckey.replace('/','\\')
-		logger.error(f'Key does not exist: {seckey_win}')
+		if is_win:
+			seckey = seckey.replace('/','\\')
+		logger.error(f'Key does not exist: {seckey}')
 		rb.returncode = ReturnCode.BAD_LOGIN
 		rb.error = "No key"
 		return rb
@@ -155,7 +163,10 @@ def generate_keys(userhost):
 	# cmd = f'echo y |ssh-keygen -q -N "" -f {seckey} -b 2048 -t rsa -m PEM'
 	# ssh-keygen defaults to openssh rsa 3072 bits keys
 	# PEM format not supported by libssh2 openssl no-stdio ?
-	cmd = f'echo y |ssh-keygen -m PEM -q -N "" -f {seckey}'
+	if is_win:
+		cmd = f'echo y | ssh-keygen -m PEM -q -N "" -f {seckey}'
+	else:
+		cmd = f'ssh-keygen -m PEM -q -N "" -f {seckey}'
 	run(cmd)
 	with open(pubkey) as r:
 		pubkey = r.read()
@@ -257,8 +268,9 @@ def main(userhost, password, port=22):
 		client.close()
 		rb.returncode = ReturnCode.BAD_SSH
 		return rb
-
-	set_key_permissions(user)
+	
+	if is_win:
+		set_key_permissions(user)
 
 	logger.debug(f'Publising public key...')		
 	# Copy to the target machines.
