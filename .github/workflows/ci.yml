@@ -31,17 +31,18 @@ jobs:
       #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - if: ${{ matrix.in-linux }}
+        name: Setup linux box
         run: |
           sudo apt-get install -y libwebkit2gtk-4.0-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-          adduser support --gecos "First,Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
-          echo 'support:support' | chpasswd
-          usermod -aG sudo support
-          echo -e "support\tALL=(ALL)\tNOPASSWD: ALL" > /etc/sudoers.d/support 2>/dev/null
-          chmod 0755 /etc/sudoers.d/support
-          apt-get update
-          apt-get remove -y -qq --purge openssh-server `> /dev/null
-          apt-get install -y -qq openssh-server `> /dev/null
-          service ssh --full-restart
+          sudo adduser support --gecos "First,Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
+          sudo echo 'support:support' | chpasswd
+          sudo usermod -aG sudo support
+          sudo echo -e "support\tALL=(ALL)\tNOPASSWD: ALL" > /etc/sudoers.d/support 2>/dev/null
+          sudo chmod 0755 /etc/sudoers.d/support
+          sudo apt-get update
+          sudo apt-get remove -y -qq --purge openssh-server `> /dev/null
+          sudo apt-get install -y -qq openssh-server `> /dev/null
+          sudo service ssh --full-restart
           python3 setupssh.py support@localhost support
 
       - run: yarn
