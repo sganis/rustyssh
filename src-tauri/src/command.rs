@@ -6,7 +6,6 @@ use std::os::windows::process::CommandExt;
 pub fn run(cmd: &str) -> (String, String, i32) {
     #[cfg(target_os = "windows")]
     let r = Command::new("cmd").arg("/c").raw_arg(cmd).output().unwrap();
-
     #[cfg(not(target_os = "windows"))]
     let r = Command::new("sh").arg("-c").arg(cmd).output().unwrap();
 
@@ -28,10 +27,17 @@ mod tests {
     }
     #[test]
     fn run_stderr() {
-        let (_,e,r) = run("dir c:\\nofile");
-        println!("{e}");
-        assert!(e.contains("Not Found"));
-        assert_eq!(r, 1);
+        if cfg!(windows) {
+            let (_,e,r) = run("dir c:\\nofile");
+            println!("{e}");
+            assert!(e.contains("Not Found"));
+            assert_eq!(r, 1);
+        } else {
+            let (_,e,r) = run("ls nofile");
+            println!("{e}");
+            assert!(e.contains("No such file"));
+            assert_eq!(r, 2);
+        }
     }
     #[test]
     fn run_status() {
@@ -51,10 +57,17 @@ mod tests {
     }
     #[test]
     fn run_cancel_stderr() {
-        let (o,e,r) = run("dir c:\\nofile 2>&1");
-        assert!(o.contains("Not Found"));
-        assert_eq!(e, "");
-        assert_eq!(r, 1);
+        if cfg!(windows) {
+            let (o,e,r) = run("dir c:\\nofile 2>&1");
+            assert!(o.contains("Not Found"));
+            assert_eq!(e, "");
+            assert_eq!(r, 1);
+        } else {
+            let (o,e,r) = run("ls nofile 2>&1");
+            assert!(o.contains("No such file"));
+            assert_eq!(e, "");
+            assert_eq!(r, 2);
+        }
     }
     
 }
