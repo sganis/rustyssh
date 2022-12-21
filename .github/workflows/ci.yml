@@ -42,7 +42,8 @@ jobs:
           python3 -m pip install --disable-pip-version-check paramiko
           python3 setupssh.py support@localhost support
 
-      - run: yarn
+      - run: yarn && yarn build
+
       # - run: yarn tauri build -d -b none
       - if: ${{ matrix.in-linux }}
         name: Test in Linux
