@@ -49,6 +49,7 @@ jobs:
         if: ${{ matrix.in-macos }}
         run: |
           sudo systemsetup -setremotelogin on 
+          sudo systemsetup -getremotelogin
           id
           ls -l /Users
           id runner
