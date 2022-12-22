@@ -49,8 +49,12 @@ jobs:
         if: ${{ matrix.in-macos }}
         run: |
           sudo systemsetup -setremotelogin on 
+          id
+          ls -l /Users
           highestUID=$( sudo dscl . -list /Users UniqueID | awk '$2>m {m=$2} END { print m }' )
+          echo highiest UID: $highestUID
           nextUID=$(( highestUID+1 ))
+          echo $nextUID
           sudo dscl . create /Users/support
           sudo dscl . create /Users/support UserShell /bin/bash
           sudo dscl . create /Users/support RealName Support 
@@ -58,7 +62,10 @@ jobs:
           sudo dscl . create /Users/support PrimaryGroupID 20
           sudo dscl . passwd /Users/support support
           sudo dscl . create "/Users/support" NFSHomeDirectory /Users/support
-
+          echo user support created
+          ls -l /Users
+          id support
+          
       - name: Setup ssh
         if: ${{ matrix.run-test }}
         run: |
