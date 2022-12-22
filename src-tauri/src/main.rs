@@ -187,10 +187,11 @@ async fn get_files(path: String, app: State<'_,App>) -> Result<String, String> {
     }       
 
     let symlinks: Vec<String> = files.iter()
-        .filter(|f| f.is_link)
-        .map(|f| f.path.clone()).collect();
-    //println!("symlinks: {:?}", symlinks);
-    let cmd = format!("file -L \"{}\"", symlinks.join("\" \""));
+       .filter(|f| f.is_link)
+       .map(|f| f.path.clone()).collect();
+    println!("symlinks: {:?}", symlinks);
+    //let cmd = format!("file -L \"{}\"", symlinks.join("\" \""));
+    let cmd = format!("stat -L -c %F \"{}\"", symlinks.join("\" \""));
     let o = ssh.run(&cmd)?;
     let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
     
@@ -210,7 +211,7 @@ async fn get_files(path: String, app: State<'_,App>) -> Result<String, String> {
             }
         }
     }
-    // println!("{:?}", &files);
+    println!("{:?}", &files);
     let mut result: Vec<&File> = files.iter().filter(|f| f.is_dir).collect();
     let mut onlyfiles: Vec<&File> = files.iter().filter(|f| !f.is_dir).collect();
     result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));

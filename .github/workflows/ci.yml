@@ -13,7 +13,7 @@ jobs:
             run-test: 1
           - os: macos-latest
             in-macos: 1
-            run-test: 1
+            # run-test: 1
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -65,7 +65,7 @@ jobs:
           ls -l /Users
           id support
           netstat -an|grep LISTEN|grep 22
-          
+
       - name: Setup ssh
         if: ${{ matrix.run-test }}
         run: |
