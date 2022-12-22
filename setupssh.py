@@ -255,12 +255,13 @@ def main(userhost, password, port=22):
 	try:
 		logger.debug('Connecting using password...')
 		client.connect(hostname=host, username=user, password=password, port=port, timeout=10, look_for_keys=False)     
-	except paramiko.ssh_exception.AuthenticationException:
+	except paramiko.ssh_exception.AuthenticationException as ex:
 		rb.error = f'User or password wrong'
 		rb.error += f'\nUser: {user}'
 		rb.error += f'\nPass: {password}'
 		rb.error += f'\nHost: {host}'
 		rb.error += f'\nPort: {port}'
+		rb.error += f'\nerror: {ex}'		
 		rb.returncode = 1
 	except Exception as ex:
 		rb.error = f'connection error: {ex}'
