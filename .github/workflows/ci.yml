@@ -50,9 +50,8 @@ jobs:
         run: |
           sudo systemsetup -setremotelogin on 
           sudo systemsetup -getremotelogin
-          id
           ls -l /Users
-          id runner
+          id 
           sudo dscl . create /Users/support
           sudo dscl . create /Users/support UserShell /bin/bash
           sudo dscl . create /Users/support RealName Support 
@@ -65,7 +64,8 @@ jobs:
           echo user support created
           ls -l /Users
           id support
-
+          netstat -an|grep LISTEN|grep 22
+          
       - name: Setup ssh
         if: ${{ matrix.run-test }}
         run: |

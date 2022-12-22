@@ -16,7 +16,7 @@ if is_win:
 	import shlex
 
 logger = logging.getLogger('rustyssh')
-logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
+logging.getLogger("paramiko.transport").setLevel(logging.DEBUG)
 
 DIR = os.path.dirname(os.path.realpath(__file__))
 
