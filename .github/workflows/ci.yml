@@ -51,21 +51,20 @@ jobs:
           sudo systemsetup -setremotelogin on 
           id
           ls -l /Users
-          highestUID=$( sudo dscl . -list /Users UniqueID | awk '$2>m {m=$2} END { print m }' )
-          echo highiest UID: $highestUID
-          nextUID=$(( highestUID+1 ))
-          echo $nextUID
+          id runner
           sudo dscl . create /Users/support
           sudo dscl . create /Users/support UserShell /bin/bash
           sudo dscl . create /Users/support RealName Support 
-          sudo dscl . create /Users/support UniqueID $nextUID
+          sudo dscl . create /Users/support UniqueID 502
           sudo dscl . create /Users/support PrimaryGroupID 20
           sudo dscl . passwd /Users/support support
-          sudo dscl . create "/Users/support" NFSHomeDirectory /Users/support
+          sudo dscl . create /Users/support NFSHomeDirectory /Users/support
+          sudo mkdir /Users/support
+          sudo chown support /Users/support
           echo user support created
           ls -l /Users
           id support
-          
+
       - name: Setup ssh
         if: ${{ matrix.run-test }}
         run: |
