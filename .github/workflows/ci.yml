@@ -27,6 +27,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
+      
       # - uses: actions/cache@v3
       #   with:
       #     path: |
@@ -34,27 +35,20 @@ jobs:
       #       src-tauri/target
       #     key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - if: ${{ matrix.in-linux }}
-        name: Setup linux box
+      - name: Setup linux
+        if: ${{ matrix.in-linux }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
           sudo apt-get install -y openssh-server
           sudo service ssh --full-restart
-        name: Create user
-        run: |
           sudo adduser support --gecos "First,Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
           echo support:support | sudo chpasswd
-        name: Setup ssh
-        run: |
-          python3 -m pip install --disable-pip-version-check paramiko
-          python3 setupssh.py support@localhost support
       
-      - if: ${{ matrix.in-linux }}
-        name: Enable ssh server in mac
-        run: sudo systemsetup -setremotelogin on 
-        name: Create user
+      - name: Setup mac
+        if: ${{ matrix.in-macos }}
         run: |
+          sudo systemsetup -setremotelogin on 
           highestUID=$( sudo dscl . -list /Users UniqueID | awk '$2>m {m=$2} END { print m }' )
           nextUID=$(( highestUID+1 ))
           sudo dscl . create /Users/support
@@ -63,19 +57,20 @@ jobs:
           sudo dscl . create /Users/support UniqueID $nextUID
           sudo dscl . create /Users/support PrimaryGroupID 20
           sudo dscl . passwd /Users/support support
-          # sudo dscl . append /Groups/admin GroupMembership support
           sudo dscl . create "/Users/support" NFSHomeDirectory /Users/support
-        name: Setup ssh
+
+      - name: Setup ssh
+        if: ${{ matrix.run-test }}
         run: |
           python3 -m pip install --disable-pip-version-check paramiko
           python3 setupssh.py support@localhost support
-
+      
       - name: Install web deps
         run: yarn && yarn build
 
       # - run: yarn tauri build -d -b none
-      - if: ${{ matrix.run-test }}
-        name: Test
+      - name: Test
+        if: ${{ matrix.run-test }}
         run: |
           cd src-tauri
           cargo test
