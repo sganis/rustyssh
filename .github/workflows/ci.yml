@@ -1,5 +1,9 @@
 name: CI
 on: [push, workflow_dispatch]
+env:
+  TEST_SSH_HOST: localhost
+  TEST_SSH_USER: support
+  TEST_SSH_PASS: support
 
 jobs:
   Build:
@@ -27,7 +31,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: "./src-tauri -> target"
-      
+
       # - uses: actions/cache@v3
       #   with:
       #     path: |
@@ -44,7 +48,7 @@ jobs:
           sudo service ssh --full-restart
           sudo adduser support --gecos "First,Last,RoomNumber,WorkPhone,HomePhone" --disabled-password
           echo support:support | sudo chpasswd
-      
+
       - name: Setup mac
         if: ${{ matrix.in-macos }}
         run: |
@@ -71,7 +75,7 @@ jobs:
         run: |
           python3 -m pip install --disable-pip-version-check paramiko
           python3 setupssh.py support@localhost support
-      
+
       - name: Install web deps
         run: yarn && yarn build
 
@@ -89,6 +93,6 @@ jobs:
         with:
           tagName: ${{ github.ref_name }}
           releaseName: ${{ github.ref_name }}
-          releaseBody: 'See the assets to download and install.'
+          releaseBody: "See the assets to download and install."
           releaseDraft: true
           prerelease: false
