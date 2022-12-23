@@ -6,13 +6,14 @@ import { downloadDir, appDataDir } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/api/dialog';
 
 import {FileStore, PageStore, 
-  UserStore, CurrentPath, FileRequested, NewFolderName,
+  UserStore, CurrentPath, FileRequested,
   Message, Error, Progress} from '../js/store'
 
 import {sleep, getParent} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
 import FilePage from "$lib/FilePage.svelte";
+import FileLoading from "$lib/FileLoading.svelte";
 import FileDownload from "$lib/FileDownload.svelte";
 import Login from "./Login.svelte";
 import { appWindow } from '@tauri-apps/api/window';
@@ -21,10 +22,10 @@ import Modal from "./Modal.svelte";
 
 let isDownloading = false;
 let isUploading = false;
+let isGettingFiles = false;
 let showNewFolderModal = false;
 let showDeleteModal = false;
 let showHidden = false;
-
 let newFolderName = "";
 let fileToDelete = "";
 
@@ -98,6 +99,7 @@ const login = async (e) => {
 const getFiles = async (path) => {
     $Error = "";
     $CurrentPath = path;
+    isGettingFiles = true;
     try {
       console.log("listing:" + path);
       const r = await invoke("get_files", { path, showHidden });
@@ -108,6 +110,7 @@ const getFiles = async (path) => {
       $Error = e.toString();
       $FileStore = [];      
     }
+    isGettingFiles = false;    
 }
 const getPage = async (path, page, recordsPerPage) => {
   try {
@@ -231,18 +234,22 @@ const fileRename = async (e) => {
   {/if}
   </div>
   <div class="path">{$CurrentPath}</div>
-  {#if $FileRequested}
-    {#if isTextfile}
-      <FilePage />
+  {#if !isGettingFiles}
+    {#if $FileRequested}
+      {#if isTextfile}
+        <FilePage />
+      {:else}
+        <FileDownload  />
+      {/if}
     {:else}
-      <FileDownload  />
+      <FileList 
+        on:file-click={fileClick}  
+        on:file-delete={fileDelete} 
+        on:file-rename={fileRename}/>
     {/if}
-  {:else}
-    <FileList 
-      on:file-click={fileClick}  
-      on:file-delete={fileDelete} 
-      on:file-rename={fileRename}/>
-  {/if}
+  {:else} 
+    <FileLoading />
+  {/if}  
 {:else} 
   <Login on:login={login} />
 {/if}

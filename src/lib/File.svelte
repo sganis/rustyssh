@@ -35,6 +35,7 @@ const filemodified = () => {
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
+{#if Object.keys(file).length > 0}
 <div class="file" class:selected={$CurrentPath===file.path} >
     <img class="icon" 
         src={file.is_dir && !file.is_link ? folderIcon 
@@ -61,6 +62,9 @@ const filemodified = () => {
         </Dropdown>
     </span>
 </div>
+{:else}
+    <div class="empty"><p class="blur"></p></div>
+{/if}
 
 <style>
 .icon {
@@ -90,5 +94,17 @@ const filemodified = () => {
 }
 .filemodified {
     white-space: nowrap;
+}
+.empty {
+    display: flex;
+    flex-wrap: nowrap;
+    padding: 10px;
+    
+}
+.blur {
+    margin: 10px;
+    width: 100%;
+    background-color: #fafafa;
+    height: 2em;
 }
 </style>

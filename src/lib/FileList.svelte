@@ -6,17 +6,17 @@ import ErrorBox from "./ErrorBox.svelte";
 import {getParent} from "../js/util"
 
 
-$: parent = {
-    path: getParent($CurrentPath),
-    name: '..',
-    filetype: 'DIR',
-    size: 0,
-    modified: 0,
-    selected: false,
-    is_dir: true,
-    is_link: false,
-};
-$: hasParent = $CurrentPath !== "/";
+// $: parent = {
+//     path: getParent($CurrentPath),
+//     name: '..',
+//     filetype: 'DIR',
+//     size: 0,
+//     modified: 0,
+//     selected: false,
+//     is_dir: true,
+//     is_link: false,
+// };
+// $: hasParent = $CurrentPath !== "/";
 
 </script>
 <div class="scrollable border">   
