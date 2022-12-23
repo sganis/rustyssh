@@ -2,7 +2,7 @@
 // @ts-nocheck
 
 import {createEventDispatcher} from 'svelte'
-import {Dropdown, DropdownItem, DropdownMenu, DropdownToggle, } from 'sveltestrap';
+import {Dropdown, DropdownItem, DropdownMenu, DropdownToggle, FormGroup, Input } from 'sveltestrap';
 import {CurrentPath, FileRequested, Progress} from '../js/store'
 
 export let totalFiles = 0;
@@ -11,9 +11,10 @@ export let isUploading = false;
 
 const dispatch = createEventDispatcher();
 
+let hidden = true;
+
 $: inRootFolder = $CurrentPath === "/";
 $: prog = ($Progress * 100.0).toFixed();
-
 
 const goUp = () => {
     dispatch('go-up', $CurrentPath);
@@ -27,6 +28,9 @@ const uploadClick = () => {
 const newFolderClick = () => {
     dispatch('new-folder', $CurrentPath);
 }
+const hiddenChanged = () => {
+    dispatch('show-hidden', hidden);
+}
 </script>
 
 <div class="search">
@@ -34,24 +38,35 @@ const newFolderClick = () => {
     <!-- <button on:click={handleClick}>Filter</button> -->
     <button class="btn btn-light border text-nowrap" 
         on:click={goUp} disabled={inRootFolder}>
-        <i class="bi-arrow-up-circle lp10"></i>Go Up</button>
+        <i class="bi-arrow-up-circle rp10"></i>Go Up</button>
     <button class="btn btn-light border" 
         on:click={downloadClick} disabled={!$FileRequested || isDownloading}>
-        <i class="bi-download lp10"></i>Download</button>
+        <i class="bi-download rp10"></i>Download</button>
     <button class="btn btn-light border" 
         on:click={uploadClick} disabled={$FileRequested || isUploading}>
-        <i class="bi-upload lp10"></i>Upload</button>
+        <i class="bi-upload rp10"></i>Upload</button>
     
     <Dropdown>
         <DropdownToggle class="btn btn-light border">
             <i class="bi-three-dots"/></DropdownToggle>
       <DropdownMenu>
         <DropdownItem on:click={newFolderClick}>
-            <i class="bi-folder lp10"/>New Folder</DropdownItem>
+            <i class="bi-folder rp10"/>New Folder
+        </DropdownItem>
         <DropdownItem>
-            <i class="bi-folder-symlink lp10"/>Create Link</DropdownItem>
-      </DropdownMenu>
+           <i class="bi-folder-symlink rp10"/>Create Link
+        </DropdownItem>
+        <!-- <DropdownItem>
+            
+        </DropdownItem> -->
+                        
+     </DropdownMenu>
     </Dropdown>
+    <span class="text-nowrap">
+        <input type="checkbox" bind:checked={hidden} id="chk-hidden" on:change={hiddenChanged}/>
+        <label class="form-check-label" for="chk-hidden">
+            Hidden
+          </label></span>
     <div class="w100"></div>
     {#if $Progress > 0 }
     <div>{prog}%</div>
@@ -72,4 +87,5 @@ const newFolderClick = () => {
     /* display:flex; */
     white-space:nowrap;
 }
+
 </style>

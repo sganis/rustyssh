@@ -27,6 +27,7 @@ ssh2 = { git = "https://github.com/alexcrichton/ssh2-rs.git"}
 confy = "0.5.1"
 dirs = "4.0.0"
 tauri-plugin-window-state = "0.1.0"
+chrono = "0.4.23"
 
 [features]
 # by default Tauri runs in production mode

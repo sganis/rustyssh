@@ -28,7 +28,7 @@ impl Ssh {
     }
     pub fn supported_algs() -> String {
         let ssh = Session::new().unwrap();
-        println!("HostKey: {:?}", ssh.supported_algs(ssh2::MethodType::HostKey).unwrap());
+        println!("hostKey: {:?}", ssh.supported_algs(ssh2::MethodType::HostKey).unwrap());
         println!("CryptCs: {:?}", ssh.supported_algs(ssh2::MethodType::CryptCs).unwrap());
         println!("Kex: {:?}", ssh.supported_algs(ssh2::MethodType::Kex).unwrap());
         println!("MacCs: {:?}", ssh.supported_algs(ssh2::MethodType::MacCs).unwrap());
@@ -371,6 +371,36 @@ impl Ssh {
             Ok(_) => Ok(())
         }
     }
+    pub fn sftp_readdir(&mut self, dirname: &str) 
+    -> Result<Vec<(PathBuf, FileStat)>, String> {
+        let path = Path::new(dirname);
+        let files: Vec<(PathBuf, FileStat)> = match self.sftp.as_ref().unwrap().readdir(path) {
+            Err(e) => return Err(format!("Cannot read directory {dirname}: {e}")),
+            Ok(o) => o
+        };
+        Ok(files)
+    }
+    pub fn sftp_readlink(&mut self, filename: &str) -> Result<String, String> {
+        let path = Path::new(filename);
+        let destination = match self.sftp.as_ref().unwrap().readlink(path) {
+            Err(e) => return Err(format!("Cannot read path {filename}: {e}")),
+            Ok(o) => o
+        };
+        Ok(String::from(destination.to_string_lossy()))
+    }
+    pub fn sftp_realpath(&mut self, filename: &str) -> Result<(String, FileStat), String> {
+        let path = Path::new(filename);
+        let sftp = self.sftp.as_ref().unwrap();
+        let destination = match self.sftp.as_ref().unwrap().realpath(path) {
+            Err(e) => return Err(format!("Cannot read real path {filename}: {e}")),
+            Ok(o) => o
+        };
+        let stat = match sftp.stat(&destination) {
+            Err(e) => return Err(format!("Cannot stat {filename}: {e}")),
+            Ok(o) => o
+        };
+        Ok((String::from(destination.to_string_lossy()), stat))
+    }
 }
 
 
@@ -378,47 +408,60 @@ impl Ssh {
 mod tests {
     
     use super::*;
-    const USER: &str = "support";
-    const PASS: &str = "support";
-    const HOST: &str = "localhost";
+    use std::env;
     const PORT: i16 = 22;
 
+    fn get_params() -> (String, String, String) {
+        let host = env::var("TEST_SSH_HOST").unwrap();
+        let user = env::var("TEST_SSH_USER").unwrap();
+        let pass = env::var("TEST_SSH_USER").unwrap();
+        assert!(host.len()>0);
+        assert!(user.len()>0);
+        assert!(pass.len()>0);
+        (host, user, pass)
+    }
     #[test]
     fn connect_with_password() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        let (host, user, pass) = get_params();
+        let r = ssh.connect_with_password(&host, PORT, &user, &pass);
         assert!(r.is_ok());
     }
     #[test]
     fn connect_with_password_wrong() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password(HOST, PORT, USER, "wrong");
+        let (host, user, _) = get_params();
+        let r = ssh.connect_with_password(&host, PORT, &user, "wrong");
         assert!(r.is_err());
     }
     #[test]
     fn connect_with_key() {
         let mut ssh = Ssh::new();
+        let (host, user, _) = get_params();
         let pkey = Ssh::private_key_path();
         let pkey = pkey.to_str().unwrap();
-        let r = ssh.connect_with_key(HOST, PORT, USER, &pkey);
+        let r = ssh.connect_with_key(&host, PORT, &user, &pkey);
         assert!(r.is_ok());
     }
     #[test]
     fn connect_with_key_wrong() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_key(HOST, PORT, USER, "/invalid/key");
+        let (host, user, _) = get_params();
+        let r = ssh.connect_with_key(&host, PORT, &user, "/invalid/key");
         assert!(r.is_err());
     }
     #[test]
     fn connect_with_host_wrong() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password("example.com", PORT, USER, PASS);
+        let (_, user, pass) = get_params();
+        let r = ssh.connect_with_password("example.com", PORT, &user, &pass);
         assert!(r.is_err());
     }
     #[test]
     fn run_command() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        let (host, user, pass) = get_params();
+        let r = ssh.connect_with_password(&host, PORT, &user, &pass);
         assert!(r.is_ok());
         let output = ssh.run("whoami").unwrap();
         assert_eq!("support", output.as_str());
@@ -462,7 +505,8 @@ mod tests {
     
     #[test]
     fn setup_ssh() {
-        assert!(Ssh::setup_ssh(HOST, PORT, USER, PASS).is_ok());
+        let (host, user, pass) = get_params();
+        assert!(Ssh::setup_ssh(&host, PORT, &user, &pass).is_ok());
     }
 
     #[test]
@@ -472,7 +516,8 @@ mod tests {
     #[test]
     fn mkdir_rmdir() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        let (host, user, pass) = get_params();
+        let r = ssh.connect_with_password(&host, PORT, &user, &pass);
         assert!(r.is_ok());
         assert!(ssh.sftp_stat( "/home/support").is_ok());
         assert!(ssh.sftp_stat( "/home/support/folder").is_err());
@@ -485,7 +530,8 @@ mod tests {
     #[test]
     fn create_delete() {
         let mut ssh = Ssh::new();
-        let r = ssh.connect_with_password(HOST, PORT, USER, PASS);
+        let (host, user, pass) = get_params();
+        let r = ssh.connect_with_password(&host, PORT, &user, &pass);
         assert!(r.is_ok());
         assert!(ssh.sftp_stat( "/home/support").is_ok());
         assert!(ssh.sftp_stat( "/home/support/file").is_err());
@@ -494,5 +540,18 @@ mod tests {
         assert!(ssh.sftp_delete("/home/support/file").is_ok());
         assert!(ssh.sftp_stat( "/home/support/file").is_err());
         
+    }
+    #[test]
+    fn readdir() {
+        let mut ssh = Ssh::new();
+        let (host, user, pass) = get_params();        
+        let r = ssh.connect_with_password(&host, PORT, &user, &pass);
+        assert!(r.is_ok());
+        assert!(ssh.sftp_stat( "/home/support").is_ok());
+        let files = ssh.sftp_readdir("/").unwrap();
+        assert!(files.len() > 0);
+        // for f in files  {
+        //     println!("{:?}", f);
+        // }
     }
 }

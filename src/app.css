@@ -121,9 +121,11 @@ button {
 }
 
 .lp10 {
+  padding-left: 10px;
+}
+.rp10 {
   padding-right: 10px;
 }
-
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;

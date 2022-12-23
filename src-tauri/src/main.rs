@@ -13,6 +13,7 @@ use settings::Settings;
 use std::sync::Mutex;
 use tauri::State;
 use serde::{Deserialize, Serialize};
+use chrono::prelude::{DateTime, NaiveDateTime, Utc};
 
 #[derive(Default)]
 struct App {
@@ -125,101 +126,230 @@ async fn get_new_filename(path: String) -> Result<String, String> {
     Ok(util::new_filename(&path))
 }
 
+//#[tauri::command]
+// async fn get_files_ls(path: String, app: State<'_,App>) -> Result<String, String> {
+//     let mut ssh = app.ssh.lock().unwrap();
+//     let mut files: Vec<File> = Vec::new();
+//     let cmd = format!("/bin/sh -c \"/bin/ls -lH --time-style=full-iso {path}|grep -v total\"");
+//     let o = ssh.run(&cmd)?;
+//     let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
+
+//     for line in lines {
+//         let items: Vec<String> = line.split_whitespace().map(|s| s.to_string()).collect();
+//         if items.len() < 9 {
+//             continue;
+//         }
+//         let mut is_dir = false;
+//         let mut is_link = false;
+//         let filetype = match &items[0][0..1] {
+//             "-" => "REG",
+//             "d" => {is_dir = true; "DIR"},
+//             "l" => {is_link = true; "LINK"},
+//             "c" => "CDEV",
+//             "b" => "BDEV",
+//             "s" => "SOCK",
+//             "p" => "PIPE",
+//             &_ => "UNKNOWN",
+//         }.to_string();
+//         let owner = items[2].clone();
+//         // /dev has differen ls -l output
+//         let mut size_index = 4;
+//         let mut modified_index = 5;
+//         let mut name_index = 8;
+//         let mut link_index = 10;
+
+//         if items[4].contains(",") {
+//             size_index = 5;
+//             modified_index = 6;
+//             name_index = 9;
+//             link_index = 12;
+//         }
+        
+//         let size = items[size_index].parse::<u64>().unwrap();
+//         let modified = items[modified_index].clone();                
+//         let name = items[name_index].clone();
+//         let mut fullpath = format!("{}/{}",path, name);
+
+//         if fullpath.starts_with("//") { 
+//             fullpath = String::from(&fullpath[1..]);
+//         }
+//         let path = fullpath;
+//         let parent = path.clone();
+    
+//         let link_path = match filetype.as_str() {
+//             "LINK" => items[link_index].clone(),
+//             &_ => "".to_string(),
+//         };
+
+//         let file = File { name, filetype, size, owner, modified, path, 
+//             parent, link_path, is_dir, is_link };
+//         //println!("{:?}", file);
+//         files.push(file);
+//     }       
+
+//     let symlinks: Vec<String> = files.iter()
+//        .filter(|f| f.is_link)
+//        .map(|f| f.path.clone()).collect();
+    
+//        if symlinks.len() > 0 {
+//         println!("symlinks: {:?}", symlinks);
+//         //let cmd = format!("file -L \"{}\"", symlinks.join("\" \""));
+//         let cmd = format!("stat -L -c %F \"{}\"", symlinks.join("\" \""));
+//         let o = ssh.run(&cmd)?;
+//         let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
+        
+//         for line in lines {
+//             let items: Vec<String> = line.split(":").map(|s| s.to_string()).collect();
+//             if items.len() < 2 {
+//                 continue;
+//             }
+//             let path = items[0].clone();
+//             let start = items[1].len()-9;
+//             let is_dir = if items[1][start..].contains("directory") { true } else { false };
+//             //files.push((path, is_dir));
+//             for f in  &mut files {
+//                 if f.path == path {
+//                     f.is_dir = is_dir;
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+//     //println!("{:?}", &files);
+//     let mut result: Vec<&File> = files.iter().filter(|f| f.is_dir).collect();
+//     let mut onlyfiles: Vec<&File> = files.iter().filter(|f| !f.is_dir).collect();
+//     result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+//     onlyfiles.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+//     result.extend(onlyfiles);
+//     Ok(serde_json::to_string(&result).unwrap())
+// }
+
 #[tauri::command]
-async fn get_files(path: String, app: State<'_,App>) -> Result<String, String> {
+async fn get_files(path: String, show_hidden: bool, app: State<'_,App>) 
+-> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
     let mut files: Vec<File> = Vec::new();
-    let cmd = format!("/bin/sh -c \"/bin/ls -lH --time-style=full-iso {path}|grep -v total\"");
-    let o = ssh.run(&cmd)?;
-    let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
 
-    for line in lines {
-        let items: Vec<String> = line.split_whitespace().map(|s| s.to_string()).collect();
-        if items.len() < 9 {
-            continue;
+    let sftpfiles = match ssh.sftp_readdir(&path) {
+        Err(e) => return Err(e),
+        Ok(o) => o,
+    };
+
+    println!("{:?}",sftpfiles);
+
+    for (p, stat) in sftpfiles {
+        let path = String::from(p.to_string_lossy()).replace("\\","/");
+        let name = String::from(p.file_name().unwrap().to_string_lossy());
+        
+        if !show_hidden && name.starts_with(".") {
+            continue
         }
+
+        let file_type = stat.file_type();        
         let mut is_dir = false;
         let mut is_link = false;
-        let filetype = match &items[0][0..1] {
-            "-" => "REG",
-            "d" => {is_dir = true; "DIR"},
-            "l" => {is_link = true; "LINK"},
-            "c" => "CDEV",
-            "b" => "BDEV",
-            "s" => "SOCK",
-            "p" => "PIPE",
-            &_ => "UNKNOWN",
+        let filetype = match file_type {
+            ssh2::FileType::RegularFile => "REG",
+            ssh2::FileType::Directory => {is_dir = true; "DIR"},
+            ssh2::FileType::Symlink => {is_link = true; "LINK"},
+            ssh2::FileType::CharDevice => "CDEV",
+            ssh2::FileType::BlockDevice => "BDEV",
+            ssh2::FileType::Socket => "SOCK",
+            ssh2::FileType::NamedPipe => "PIPE",
+            _ => "UNKNOWN",
         }.to_string();
-        let owner = items[2].clone();
-        // /dev has differen ls -l output
-        let mut size_index = 4;
-        let mut modified_index = 5;
-        let mut name_index = 8;
-        let mut link_index = 10;
+        let size = stat.size.unwrap();
+        let naive_time = NaiveDateTime::from_timestamp_opt(stat.mtime.unwrap() as i64, 0).unwrap();
+        let datetime: DateTime<Utc> = DateTime::from_utc(naive_time, Utc);
+        let modified = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        let owner = stat.uid.unwrap().to_string();
 
-        if items[4].contains(",") {
-            size_index = 5;
-            modified_index = 6;
-            name_index = 9;
-            link_index = 12;
-        }
-        
-        let size = items[size_index].parse::<u64>().unwrap();
-        let modified = items[modified_index].clone();                
-        let name = items[name_index].clone();
-        let mut fullpath = format!("{}/{}",path, name);
+        // if name.starts_with("/") { 
+        //     name = String::from(&name[1..]);
+        // }
+        // let mut fullpath = format!("{}/{}",path, name);
 
-        if fullpath.starts_with("//") { 
-            fullpath = String::from(&fullpath[1..]);
-        }
-        let path = fullpath;
+        // if fullpath.starts_with("//") { 
+        //     fullpath = String::from(&fullpath[1..]);
+        // }
+        // let path = fullpath;
         let parent = path.clone();
     
-        let link_path = match filetype.as_str() {
-            "LINK" => items[link_index].clone(),
-            &_ => "".to_string(),
-        };
+        // let link_path = match filetype.as_str() {
+        //     "LINK" => items[link_index].clone(),
+        //     &_ => "".to_string(),
+        // };
+        let mut link_path = "".to_string();
 
-        let file = File { name, filetype, size, owner, modified, path, 
-            parent, link_path, is_dir, is_link };
+        // resolve link
+        if file_type.is_symlink() {
+            link_path = match ssh.sftp_realpath(&path)  {
+                Err(e) => {
+                    println!("error {path}: {e}");
+                    "n/a".to_string()
+                },
+                Ok(o) => {
+                    println!("realpath {path} -> {}", o.0);   
+                    is_dir = o.1.is_dir();
+                    o.0
+                },
+            };
+
+
+        }
+
+        let file = File { 
+            name, filetype, size, owner, modified, path, 
+            parent, link_path, is_dir, is_link 
+        };
+        
         //println!("{:?}", file);
         files.push(file);
     }       
 
-    let symlinks: Vec<String> = files.iter()
-       .filter(|f| f.is_link)
-       .map(|f| f.path.clone()).collect();
-    println!("symlinks: {:?}", symlinks);
-    //let cmd = format!("file -L \"{}\"", symlinks.join("\" \""));
-    let cmd = format!("stat -L -c %F \"{}\"", symlinks.join("\" \""));
-    let o = ssh.run(&cmd)?;
-    let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
+    // let symlinks: Vec<String> = files.iter()
+    //    .filter(|f| f.is_link)
+    //    .map(|f| f.path.clone()).collect();
     
-    for line in lines {
-        let items: Vec<String> = line.split(":").map(|s| s.to_string()).collect();
-        if items.len() < 2 {
-            continue;
-        }
-        let path = items[0].clone();
-        let start = items[1].len()-9;
-        let is_dir = if items[1][start..].contains("directory") { true } else { false };
-        //files.push((path, is_dir));
-        for f in  &mut files {
-            if f.path == path {
-                f.is_dir = is_dir;
-                break;
-            }
-        }
-    }
+    //    if symlinks.len() > 0 {
+    //     println!("symlinks: {:?}", symlinks);
+    //     //let cmd = format!("file -L \"{}\"", symlinks.join("\" \""));
+    //     let cmd = format!("stat -L -c %F \"{}\"", symlinks.join("\" \""));
+    //     let o = ssh.run(&cmd)?;
+    //     let lines: Vec<String> = o.split("\n").map(|s| s.to_string()).collect();
+        
+    //     for line in lines {
+    //         let items: Vec<String> = line.split(":").map(|s| s.to_string()).collect();
+    //         if items.len() < 2 {
+    //             continue;
+    //         }
+    //         let path = items[0].clone();
+    //         let start = items[1].len()-9;
+    //         let is_dir = if items[1][start..].contains("directory") { true } else { false };
+    //         //files.push((path, is_dir));
+    //         for f in  &mut files {
+    //             if f.path == path {
+    //                 f.is_dir = is_dir;
+    //                 break;
+    //             }
+    //         }
+    //     }
+    // }
     println!("{:?}", &files);
     let mut result: Vec<&File> = files.iter().filter(|f| f.is_dir).collect();
     let mut onlyfiles: Vec<&File> = files.iter().filter(|f| !f.is_dir).collect();
     result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     onlyfiles.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     result.extend(onlyfiles);
-
     Ok(serde_json::to_string(&result).unwrap())
 }
+
+// #[tauri::command]
+// async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,App>) -> Result<String, String> {
+//     let mut ssh = app.ssh.lock().unwrap();
+
+// }
+
 
 #[tauri::command]
 async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,App>) -> Result<String, String> {
@@ -232,7 +362,6 @@ async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,
         let last = prev + records_per_page;
         let cmd = format!("sed -n -e \"{first},{last}p\" -e \"{last}q\" {path}");
         let o = ssh.run(&cmd)?;
-
         Ok(serde_json::to_string(&o).unwrap())
     } else {
         Ok(serde_json::to_string("Binary file").unwrap())
@@ -294,7 +423,17 @@ async fn rmdir(remotepath: String, app: State<'_,App>) -> Result<String, String>
         },
     }
 }
-
+#[tauri::command]
+async fn delete(remotepath: String, app: State<'_,App>) -> Result<String, String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    match ssh.sftp_delete(&remotepath) {
+        Err(e) => Err(e),
+        Ok(o) => {
+            println!("file deleted: {remotepath}");
+            Ok(serde_json::to_string(&o).unwrap())
+        },
+    }
+}
 fn main() {
     tauri::Builder::default()
         .manage(App {..Default::default() })
@@ -307,12 +446,14 @@ fn main() {
             setup_ssh,
             ssh_run,
             get_files,
+            //get_files_ls,
             get_new_filename,
             get_page,
             download,
             upload,
             mkdir,
             rmdir,
+            delete,
             
         ])
         .plugin(tauri_plugin_window_state::Builder::default().build())

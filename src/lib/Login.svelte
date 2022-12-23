@@ -1,22 +1,31 @@
 <script>
-    import {createEventDispatcher} from 'svelte'
-    import {UserStore, Message, Error} from '../js/store'
-    import Spinner from './Spinner.svelte'
-    import { sleep } from '../js/util';
-    const dispatch = createEventDispatcher();
+  import { invoke } from "@tauri-apps/api/tauri"
+  import {createEventDispatcher, onMount} from 'svelte'
+  import {UserStore, Message, Error} from '../js/store'
+  import Spinner from './Spinner.svelte'
+  //import { sleep } from '../js/util';
+  const dispatch = createEventDispatcher();
 
-    let server = 'localhost';
-    let user = 'support';
-    let password = '';
+  let server = 'localhost';
+  let user = 'support';
+  let password = '';
     
+  onMount(async () => {
+    try {
+      const s = await invoke("read_settings"); 
+      server = s.server;
+      user = s.user;
+    } catch (ex) {
+      console.log('Cannot read settings: '+ex);
+    }
+	});
+
     const handleSubmit = async () => {
       $Error = '';
       $Message = "Connecting...";
       $UserStore.isConnecting = true;
-      await sleep(1000);
-      dispatch('login', {
-          server,user,password
-      })
+      //await sleep(1000);
+      dispatch('login', {server,user,password});
     }
 
 </script>
@@ -51,7 +60,7 @@
             <div class="w100"></div>          
             <button type="submit" class="btn btn-light border" 
               disabled={$UserStore.isConnecting}>
-              <i class="bi-power lp10"></i>Connect
+              <i class="bi-power rp10"></i>Connect
             </button>
           </div>
         

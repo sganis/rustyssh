@@ -23,6 +23,7 @@ let isDownloading = false;
 let isUploading = false;
 let showNewFolderModal = false;
 let showDeleteModal = false;
+let showHidden = false;
 
 let newFolderName = "";
 let fileToDelete = "";
@@ -99,7 +100,7 @@ const getFiles = async (path) => {
     $CurrentPath = path;
     try {
       console.log("listing:" + path);
-      const r = await invoke("get_files", { path });
+      const r = await invoke("get_files", { path, showHidden });
       const js = JSON.parse(r);      
       $FileStore = js.length > 0 ? [...js] : [];  
     } catch (e) {
@@ -188,6 +189,10 @@ const newFolder = async (action) => {
   }
   isUploading = false;
 }
+const showHiddenToggled = async (e) => {
+  showHidden = e.detail;
+  await getFiles($CurrentPath);
+}
 const fileDelete = async (e) => {
     const file = e.detail;
     console.log('deleting '+file.path)
@@ -218,6 +223,7 @@ const fileRename = async (e) => {
     on:go-up={goUp} 
     on:download={download} 
     on:upload={upload} 
+    on:show-hidden={showHiddenToggled}
     on:new-folder={()=> showNewFolderModal=true}/>
   <div class="progress progress-wrap">
   {#if $Progress > 0 && $Progress < 1.0 }
