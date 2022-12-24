@@ -11,6 +11,7 @@ import {CurrentPath} from '../js/store'
 import {humanFileSize} from '../js/util'
 
 export let file = {};
+export let isBlur = false;
 
 const dispatch = createEventDispatcher();
 
@@ -36,7 +37,7 @@ const filemodified = () => {
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if Object.keys(file).length > 0}
-<div class="file" class:selected={$CurrentPath===file.path} >
+<div class="file" class:selected={$CurrentPath===file.path} class:blur={isBlur}>
     <img class="icon" 
         src={file.is_dir && !file.is_link ? folderIcon 
             : file.is_dir && file.is_link ? folderLinkIcon
@@ -54,16 +55,16 @@ const filemodified = () => {
           <DropdownMenu>
             <!-- <DropdownItem header>{file.name}</DropdownItem> -->
             <DropdownItem on:click={()=> fileDelete(file)}>
-                <i class="bi-trash lp10"/>Delete</DropdownItem>
+                <i class="bi-trash rp10"/>Delete</DropdownItem>
             <DropdownItem on:click={()=> fileRename(file)}>
-                <i class="bi-pencil lp10"/>Rename</DropdownItem>
+                <i class="bi-pencil rp10"/>Rename</DropdownItem>
                 
           </DropdownMenu>
         </Dropdown>
     </span>
 </div>
 {:else}
-    <div class="empty"><p class="blur"></p></div>
+    <div class="empty"><p class="opaque"></p></div>
 {/if}
 
 <style>
@@ -101,10 +102,13 @@ const filemodified = () => {
     padding: 10px;
     
 }
-.blur {
+.opaque {
     margin: 10px;
     width: 100%;
     background-color: #fafafa;
     height: 2em;
+}
+.blur {
+  filter: blur(1px);
 }
 </style>

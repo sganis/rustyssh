@@ -9,11 +9,10 @@ import {FileStore, PageStore,
   UserStore, CurrentPath, FileRequested,
   Message, Error, Progress} from '../js/store'
 
-import {sleep, getParent} from "../js/util.js";
+import {getParent} from "../js/util.js";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
 import FilePage from "$lib/FilePage.svelte";
-import FileLoading from "$lib/FileLoading.svelte";
 import FileDownload from "$lib/FileDownload.svelte";
 import Login from "./Login.svelte";
 import { appWindow } from '@tauri-apps/api/window';
@@ -234,7 +233,6 @@ const fileRename = async (e) => {
   {/if}
   </div>
   <div class="path">{$CurrentPath}</div>
-  {#if !isGettingFiles}
     {#if $FileRequested}
       {#if isTextfile}
         <FilePage />
@@ -242,14 +240,11 @@ const fileRename = async (e) => {
         <FileDownload  />
       {/if}
     {:else}
-      <FileList 
+      <FileList {isGettingFiles}
         on:file-click={fileClick}  
         on:file-delete={fileDelete} 
         on:file-rename={fileRename}/>
     {/if}
-  {:else} 
-    <FileLoading />
-  {/if}  
 {:else} 
   <Login on:login={login} />
 {/if}

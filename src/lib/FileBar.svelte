@@ -38,7 +38,7 @@ const hiddenChanged = () => {
     <!-- <button on:click={handleClick}>Filter</button> -->
     <button class="btn btn-light border text-nowrap" 
         on:click={goUp} disabled={inRootFolder}>
-        <i class="bi-arrow-up-circle rp10"></i>Go Up</button>
+        <i class="bi-arrow-up-circle rp10"></i>Up</button>
     <button class="btn btn-light border" 
         on:click={downloadClick} disabled={!$FileRequested || isDownloading}>
         <i class="bi-download rp10"></i>Download</button>
@@ -53,9 +53,9 @@ const hiddenChanged = () => {
         <DropdownItem on:click={newFolderClick}>
             <i class="bi-folder rp10"/>New Folder
         </DropdownItem>
-        <DropdownItem>
+        <!-- <DropdownItem>
            <i class="bi-folder-symlink rp10"/>Create Link
-        </DropdownItem>
+        </DropdownItem> -->
         <!-- <DropdownItem>
             
         </DropdownItem> -->
