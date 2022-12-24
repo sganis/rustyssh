@@ -344,12 +344,6 @@ async fn get_files(path: String, show_hidden: bool, app: State<'_,App>)
     Ok(serde_json::to_string(&result).unwrap())
 }
 
-// #[tauri::command]
-// async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,App>) -> Result<String, String> {
-//     let mut ssh = app.ssh.lock().unwrap();
-
-// }
-
 
 #[tauri::command]
 async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,App>) -> Result<String, String> {
@@ -412,6 +406,7 @@ async fn mkdir(remotepath: String, app: State<'_,App>) -> Result<String, String>
         },
     }
 }
+
 #[tauri::command]
 async fn rmdir(remotepath: String, app: State<'_,App>) -> Result<String, String> {
     let mut ssh = app.ssh.lock().unwrap();
@@ -429,7 +424,7 @@ async fn delete(remotepath: String, app: State<'_,App>) -> Result<String, String
     match ssh.sftp_delete(&remotepath) {
         Err(e) => Err(e),
         Ok(o) => {
-            println!("file deleted: {remotepath}");
+            println!("Deleted: {remotepath}");
             Ok(serde_json::to_string(&o).unwrap())
         },
     }

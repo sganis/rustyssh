@@ -366,9 +366,39 @@ impl Ssh {
         Ok(f)
     }
     pub fn sftp_delete(&mut self, filename: &str) -> Result<(), String> {
-        match self.sftp.as_ref().unwrap().unlink(Path::new(filename)) {
-            Err(e) => Err(format!("Cannot delete {filename}: {e}")),
-            Ok(_) => Ok(())
+        println!("deleting {filename}");
+        
+        let path = Path::new(filename);
+        let sftp = self.sftp.as_ref().unwrap();
+        let stat = match sftp.lstat(path) {
+            Err(e) => return Err(format!("{filename}: {e}")),
+            Ok(o) => o,
+        };
+        if stat.file_type().is_symlink() || stat.file_type().is_file() {
+            //println!("{filename} is file or link");        
+            match sftp.unlink(path) {
+                Err(e) => Err(format!("Cannot delete {filename}: {e}")),
+                Ok(_) => Ok(())
+            }    
+        } else {
+            //println!("file is folder: {filename}");
+            let files: Vec<(PathBuf, FileStat)> = match sftp.readdir(path) {
+                Err(e) => return Err(format!("Cannot read directory {filename}: {e}")),
+                Ok(o) => o
+            };
+            //println!("files in: {filename}: {}: {:?}", files.len(), files);                
+            if files.len() > 0 {
+               for (f,_) in files {
+                    if let Err(e) = self.sftp_delete(f.clone().to_str().unwrap()) {
+                        return Err(format!("Cannot delete directory {filename}: {e}"));
+                    }
+                }
+            }
+            println!("rmdir folder: {filename}");
+            match self.sftp.as_ref().unwrap().rmdir(path) {
+                Err(e) => return Err(format!("Cannot delete directory {filename}: {e}")),
+                Ok(_) => Ok(()),
+            }
         }
     }
     pub fn sftp_readdir(&mut self, dirname: &str) 
@@ -539,6 +569,13 @@ mod tests {
         assert!(ssh.sftp_stat( "/home/support/file").is_ok());
         assert!(ssh.sftp_delete("/home/support/file").is_ok());
         assert!(ssh.sftp_stat( "/home/support/file").is_err());
+
+        assert!(ssh.sftp_mkdir( "/home/support/dir").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/dir").is_ok());
+        assert!(ssh.sftp_create("/home/support/dir/file").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/dir/file").is_ok());
+        assert!(ssh.sftp_delete( "/home/support/dir").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/dir").is_err());
         
     }
     #[test]
