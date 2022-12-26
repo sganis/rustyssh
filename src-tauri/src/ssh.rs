@@ -431,6 +431,14 @@ impl Ssh {
         };
         Ok((String::from(destination.to_string_lossy()), stat))
     }
+    pub fn sftp_save(&mut self, filename: &str, data: &str) -> Result<(), String> {
+        let mut f = match self.sftp.as_ref().unwrap().create(Path::new(filename)) {
+            Err(e) => return Err(format!("Cannot create file {filename}: {e}")),
+            Ok(o) => o,
+        };
+        f.write_all(data.as_bytes()).expect("Cannot write data");
+        Ok(())
+    }
 }
 
 

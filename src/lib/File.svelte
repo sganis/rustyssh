@@ -11,7 +11,7 @@ import {CurrentPath} from '../js/store'
 import {humanFileSize} from '../js/util'
 
 export let file = {};
-export let isBlur = false;
+export let isLoading = false;
 
 const dispatch = createEventDispatcher();
 
@@ -37,7 +37,7 @@ const filemodified = () => {
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if Object.keys(file).length > 0}
-<div class="file" class:selected={$CurrentPath===file.path} class:blur={isBlur}>
+<div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading}>
     <img class="icon" 
         src={file.is_dir && !file.is_link ? folderIcon 
             : file.is_dir && file.is_link ? folderLinkIcon

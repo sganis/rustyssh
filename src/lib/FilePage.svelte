@@ -1,11 +1,21 @@
 <script>
+// @ts-nocheck
+
 import {PageStore} from '../js/store'
+import JsonEditor from './JsonEditor.svelte';
+
+export let isJson = true;
+
 
 </script>
 
-<div class="top border">
-    <textarea spellcheck="false">{$PageStore}</textarea>
-</div>
+    {#if isJson}
+        <JsonEditor data={JSON.parse($PageStore)} />
+    {:else}
+    <div class="top border">
+        <textarea spellcheck="false">{$PageStore}</textarea>
+    </div>
+    {/if}
 
 <style>
 .top {

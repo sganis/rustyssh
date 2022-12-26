@@ -8,10 +8,10 @@ import {CurrentPath, FileRequested, Progress} from '../js/store'
 export let totalFiles = 0;
 export let isDownloading = false;
 export let isUploading = false;
+export let hidden = true;
 
 const dispatch = createEventDispatcher();
 
-let hidden = true;
 
 $: inRootFolder = $CurrentPath === "/";
 $: prog = ($Progress * 100.0).toFixed();

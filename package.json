@@ -15,6 +15,7 @@
     "@tauri-apps/api": "^1.2.0",
     "bootstrap": "^5.2.3",
     "bootstrap-icons": "^1.10.2",
+    "svelte-jsoneditor": "^0.11.5",
     "sveltestrap": "^5.10.0"
   },
   "devDependencies": {

@@ -3,16 +3,17 @@ import {FileStore, Error} from '../js/store'
 import File from "./File.svelte";
 import ErrorBox from "./ErrorBox.svelte";
 
-export let isGettingFiles = true;
+export let isLoading = true;
 
 </script>
 <div class="scrollable border main">   
     <div class="files blur">
       {#each $FileStore as file(file.path)}
-        <File {file} isBlur={isGettingFiles} on:file-click on:file-delete on:file-rename/>
+        <File {file} {isLoading} 
+          on:file-click on:file-delete on:file-rename/>
       {/each}
     </div>
-    {#if isGettingFiles}
+    {#if isLoading}
       <div class="overlay"></div>
     {/if}
     {#if $Error}
@@ -36,7 +37,7 @@ export let isGettingFiles = true;
   left: 0;
   right: 0;
   background: white;
-  opacity: 0.7; 
+  opacity: 0.8; 
   z-index: 100;
   height: 100%;
   

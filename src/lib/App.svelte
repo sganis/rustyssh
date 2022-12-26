@@ -6,7 +6,7 @@ import { downloadDir, appDataDir } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/api/dialog';
 
 import {FileStore, PageStore, 
-  UserStore, CurrentPath, FileRequested,
+  UserStore, CurrentPath, FileRequested,JsonChanged,JsonData,JsonNewData,
   Message, Error, Progress} from '../js/store'
 
 import {getParent} from "../js/util.js";
@@ -24,7 +24,7 @@ let isUploading = false;
 let isGettingFiles = false;
 let showNewFolderModal = false;
 let showDeleteModal = false;
-let showHidden = false;
+let hidden = false;
 let newFolderName = "";
 let fileToDelete = "";
 
@@ -101,7 +101,7 @@ const getFiles = async (path) => {
     isGettingFiles = true;
     try {
       console.log("listing:" + path);
-      const r = await invoke("get_files", { path, showHidden });
+      const r = await invoke("get_files", { path, hidden });
       const js = JSON.parse(r);      
       $FileStore = js.length > 0 ? [...js] : [];  
     } catch (e) {
@@ -115,7 +115,7 @@ const getPage = async (path, page, recordsPerPage) => {
   try {
       const r = await invoke("get_page", { path, page, recordsPerPage });
       const js = JSON.parse(r);
-      console.log(js);
+      //console.log(js);
       $PageStore = js; 
       $FileRequested = true;    
     } catch (e) {
@@ -191,8 +191,8 @@ const newFolder = async (action) => {
   }
   isUploading = false;
 }
-const showHiddenToggled = async (e) => {
-  showHidden = e.detail;
+const hiddenToggled = async (e) => {
+  hidden = e.detail;
   await getFiles($CurrentPath);
 }
 const fileDelete = async (e) => {
@@ -215,36 +215,50 @@ const fileRename = async (e) => {
       console.log(ex)
     }
 }
-
+const saveFile = async () => {
+  console.log($JsonData);
+  let path = $CurrentPath;
+  let data = JSON.stringify($JsonNewData);
+  try {
+    const r = await invoke("save_file", { path, data });
+  } catch (e) {
+    console.log(e)
+  }
+  $JsonChanged = false;
+}
 </script>
 
 
 
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
-  <FileBar {totalFiles} {isDownloading} {isUploading}
+  <FileBar {totalFiles} {isDownloading} {isUploading} {hidden}
     on:go-up={goUp} 
     on:download={download} 
     on:upload={upload} 
-    on:show-hidden={showHiddenToggled}
+    on:show-hidden={hiddenToggled}
     on:new-folder={()=> showNewFolderModal=true}/>
   <div class="progress progress-wrap">
   {#if $Progress > 0 && $Progress < 1.0 }
       <div class="progress-bar" style:width="{prog}%"/>
   {/if}
   </div>
-  <div class="path">{$CurrentPath}</div>
-    {#if $FileRequested}
-      {#if isTextfile}
-        <FilePage />
-      {:else}
-        <FileDownload  />
-      {/if}
-    {:else}
-      <FileList {isGettingFiles}
-        on:file-click={fileClick}  
-        on:file-delete={fileDelete} 
-        on:file-rename={fileRename}/>
+  <div class="path">{$CurrentPath}
+    {#if $JsonChanged}
+      <button class="btn btn-sm save" on:click={saveFile}>Save</button>
     {/if}
+  </div>
+  {#if $FileRequested}
+    {#if isTextfile}
+      <FilePage />
+    {:else}
+      <FileDownload  />
+    {/if}
+  {:else}
+    <FileList isLoading={isGettingFiles}
+      on:file-click={fileClick}  
+      on:file-delete={fileDelete} 
+      on:file-rename={fileRename}/>
+  {/if}
 {:else} 
   <Login on:login={login} />
 {/if}
@@ -257,15 +271,25 @@ const fileRename = async (e) => {
   title="Delete {fileToDelete}">
 </Modal>
 
-
-
-
-
 <style>
 .path {
-  margin: 15px;
+  margin-left: 15px;
   margin-top: 0px;
   margin-bottom: 5px;
+  margin-right: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-right: 10px;
+}
+.save {
+  padding: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  color: white;
+  background-color: green;
+  border: 1px solid darkgreen;
 }
 .progress-wrap {
   height: 8px;
