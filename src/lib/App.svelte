@@ -23,10 +23,8 @@ let isDownloading = false;
 let isUploading = false;
 let isGettingFiles = false;
 let showNewFolderModal = false;
-let showDeleteModal = false;
 let hidden = false;
 let newFolderName = "";
-let fileToDelete = "";
 
 $: totalFiles = $FileStore.length;
 $: isTextfile = $PageStore !== "Binary file";
@@ -267,9 +265,7 @@ const saveFile = async () => {
   title="New folder">
   <input bind:value={newFolderName} />
 </Modal>
-<Modal open={showDeleteModal} onClosed={(action) => fileDelete(action)}
-  title="Delete {fileToDelete}">
-</Modal>
+
 
 <style>
 .path {

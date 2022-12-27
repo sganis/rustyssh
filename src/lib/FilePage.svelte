@@ -1,11 +1,10 @@
 <script>
 // @ts-nocheck
 
-import {PageStore} from '../js/store'
+import {PageStore, CurrentPath} from '../js/store'
 import JsonEditor from './JsonEditor.svelte';
 
-export let isJson = true;
-
+$: isJson =  $CurrentPath.split('.').pop() == 'json';
 
 </script>
 
