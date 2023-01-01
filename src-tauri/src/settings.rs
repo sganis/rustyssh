@@ -6,10 +6,15 @@ use dirs;
 pub struct Settings {
     pub server: String,
     pub user: String,
-    pub password: String,
     pub port: i16,
-    pub private_key: String,
     pub home_dir : String,
+    
+    #[serde(skip_serializing)]
+    pub private_key: String,
+    
+    #[serde(skip_serializing)]
+    pub password: String,
+    
 }
 
 impl Default for Settings {

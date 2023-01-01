@@ -8,37 +8,33 @@ import ErrorBox from "./ErrorBox.svelte";
 
 export let isLoading = true;
 
-const dispatch = createEventDispatcher();
+//const dispatch = createEventDispatcher();
 
-let size = 10;
-//let files = [];
-// let fileview =
+let size = 20;
 
 $: {
-  let files = $FileStore.slice().splice(size * $FilePageStore, size * ($FilePageStore + 1)); // clone
+  //console.log('page: ', $FilePageStore);
+  let pagefiles = [...$FileStore].splice(size * $FilePageStore, size ); 
+  //console.log('page files: ', pagefiles);
+  
   $FileViewStore = [
   ...$FileViewStore,
-  ...files
+  ...pagefiles
   ];
-  console.log('page: ', $FilePageStore);
-  console.log('fileview: ', $FileViewStore);
-  console.log('total files: ', files);
+  
+  //console.log('fileview: ', $FileViewStore);
   
 }
 
 </script>
 <div class="scrollable border main">   
-    <!-- <div class="files blur"> -->
-      {#each $FileViewStore as file}
-        <File {file} {isLoading} 
-          on:file-click on:file-delete on:file-rename/>
-      {/each}
-      <InfiniteScroll 
-        hasMore={$FileViewStore.length < $FileStore.length} 
-        threshold={100} on:loadMore={() => {
-          console.log('loading more...');
-          $FilePageStore++}} />
-    <!-- </div> -->
+    {#each $FileViewStore as file}
+      <File {file} {isLoading} 
+        on:file-click on:file-delete on:file-rename/>
+    {/each}
+    <InfiniteScroll 
+      hasMore={$FileViewStore.length < $FileStore.length} 
+      threshold={100} on:loadMore={() => {$FilePageStore++}} />
     {#if isLoading}
       <div class="overlay"></div>
     {/if}
