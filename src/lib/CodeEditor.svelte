@@ -1,23 +1,24 @@
 <script>
-    // @ts-nocheck
+// @ts-nocheck
 import { AceEditor } from "svelte-ace";
 import "brace/mode/toml";
 import "brace/mode/yaml";
 import "brace/mode/python";
 import "brace/mode/xml";
-import "brace/theme/chrome";
-import {onDestroy, onMount} from 'svelte'
+import "brace/theme/eclipse";
+//import {onDestroy, onMount} from 'svelte'
 
 export let data;
 export let lang;
 
+let theme = 'eclipse';
 let options = {
     fontSize: "12pt",
 };
 
 </script>
     
-<div class="editor" >
+<div class="editor border" >
     <AceEditor
         on:selectionChange={(obj) => console.log(obj.detail)}
         on:paste={(obj) => console.log(obj.detail)}
@@ -32,7 +33,7 @@ let options = {
         on:changeMode={(obj) => console.log(`change mode : ${obj.detail}`)}
         on:blur={() => console.log('blur')}
         lang={lang}
-        theme="chrome"
+        theme={theme}
         options={options}
         value={data} />
 </div>

@@ -15,6 +15,7 @@ $: {
     isCode = ext in languages;
     if (isCode) {
         lang = languages[ext];
+        console.log('language detected: ', lang);
     }
 }
 
