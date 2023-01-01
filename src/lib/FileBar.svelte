@@ -6,6 +6,7 @@ import {Dropdown, DropdownItem, DropdownMenu, DropdownToggle, FormGroup, Input }
 import {CurrentPath, FileRequested, Progress} from '../js/store'
 
 export let totalFiles = 0;
+export let currentFiles = 0;
 export let isDownloading = false;
 export let isUploading = false;
 export let hidden = true;
@@ -71,7 +72,7 @@ const hiddenChanged = () => {
     {#if $Progress > 0 }
     <div>{prog}%</div>
     {/if}
-    <div class="totalItems">[{totalFiles} items]</div>
+    <div class="totalItems">[{currentFiles}/{totalFiles} items]</div>
 </div>
 
 <style>

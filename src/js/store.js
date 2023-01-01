@@ -4,6 +4,8 @@ import { writable } from "svelte/store";
 
 export const CurrentPath = writable("");
 export const FileStore = writable([]);
+export const FileViewStore = writable([]);
+export const FilePageStore = writable([]);
 export const PageStore = writable([]);
 export const FileRequested = writable(false);
 export const JsonChanged = writable(false);

@@ -5,7 +5,7 @@ import { invoke } from "@tauri-apps/api/tauri"
 import { downloadDir, appDataDir } from '@tauri-apps/api/path';
 import { open } from '@tauri-apps/api/dialog';
 
-import {FileStore, PageStore, 
+import {FileStore, PageStore, FileViewStore, FilePageStore,
   UserStore, CurrentPath, FileRequested,JsonChanged,JsonData,JsonNewData,
   Message, Error, Progress} from '../js/store'
 
@@ -27,6 +27,7 @@ let hidden = false;
 let newFolderName = "";
 
 $: totalFiles = $FileStore.length;
+$: currentFiles = $FileViewStore.length;
 $: isTextfile = $PageStore !== "Binary file";
 $: prog = parseInt($Progress * 100);
 
@@ -95,6 +96,9 @@ const login = async (e) => {
 }
 const getFiles = async (path) => {
     $Error = "";
+    $FileViewStore = [];
+    $FilePageStore = 0;
+    $FileStore = [];
     $CurrentPath = path;
     isGettingFiles = true;
     try {
@@ -102,6 +106,9 @@ const getFiles = async (path) => {
       const r = await invoke("get_files", { path, hidden });
       const js = JSON.parse(r);      
       $FileStore = js.length > 0 ? [...js] : [];  
+      console.log('items: ', $FileStore.length);
+      console.log($FileStore);
+      
     } catch (e) {
       console.log(e);
       $Error = e.toString();
@@ -229,7 +236,7 @@ const saveFile = async () => {
 
 
 {#if $UserStore.isConnected && !$UserStore.isConnecting}
-  <FileBar {totalFiles} {isDownloading} {isUploading} {hidden}
+  <FileBar {currentFiles} {totalFiles} {isDownloading} {isUploading} {hidden}
     on:go-up={goUp} 
     on:download={download} 
     on:upload={upload} 

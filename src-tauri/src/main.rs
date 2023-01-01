@@ -209,13 +209,16 @@ async fn get_files(path: String, hidden: bool, app: State<'_,App>)
         
         //println!("{:?}", file);
         files.push(file);
-    }       
-
+    }     
+    println!("{}", files.len());  
+    println!("{:?}", files);
     let mut result: Vec<&File> = files.iter().filter(|f| f.is_dir).collect();
     let mut onlyfiles: Vec<&File> = files.iter().filter(|f| !f.is_dir).collect();
     result.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     onlyfiles.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
     result.extend(onlyfiles);
+    println!("{}", result.len());  
+    println!("{:?}", result);
     Ok(serde_json::to_string(&result).unwrap())
 }
 
