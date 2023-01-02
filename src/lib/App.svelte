@@ -29,6 +29,8 @@ let newFolderName = "";
 $: totalFiles = $FileStore.length;
 $: currentFiles = $FileViewStore.length;
 $: isTextfile = $PageStore !== "Binary file";
+$: ext =  $CurrentPath.split('.').pop();
+$: isImage = ['jpg', 'png'].includes(ext);
 $: prog = parseInt($Progress * 100);
 
 (async () => {
@@ -253,7 +255,7 @@ const saveFile = async () => {
     {/if}
   </div>
   {#if $FileRequested}
-    {#if isTextfile}
+    {#if isTextfile || isImage}
       <FilePage />
     {:else}
       <FileDownload  />
