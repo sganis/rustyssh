@@ -25,6 +25,7 @@
     "@sveltejs/adapter-static": "^1.0.0-next.50",
     "@sveltejs/kit": "^1.0.1",
     "@tauri-apps/cli": "1.2.2",
+    "simple-svelte-autocomplete": "^2.5.1",
     "svelte": "^3.49.0",
     "svelte-check": "^2.7.1",
     "svelte-preprocess": "^5.0.0",

@@ -10,6 +10,7 @@ import {FileStore, PageStore, FileViewStore, FilePageStore,
   Message, Error, Progress} from '../js/store'
 
 import {getParent} from "../js/util.js";
+import PathBar from "./PathBar.svelte";
 import FileBar from "$lib/FileBar.svelte";
 import FileList from "$lib/FileList.svelte";
 import FilePage from "$lib/FilePage.svelte";
@@ -254,6 +255,7 @@ const saveFile = async () => {
       <button class="btn btn-sm save" on:click={saveFile}>Save</button>
     {/if}
   </div>
+  <PathBar />
   {#if $FileRequested}
     {#if isTextfile || isImage}
       <FilePage />
@@ -281,13 +283,14 @@ const saveFile = async () => {
   margin-left: 15px;
   margin-top: 0px;
   margin-bottom: 5px;
-  margin-right: 5px;
+  margin-right: 15px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
+  /* justify-content: space-between; */
+  align-items: stretch;
+  /* gap: 10px; */
   padding-right: 10px;
 }
+
 .save {
   padding: 0;
   padding-left: 20px;
