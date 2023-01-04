@@ -1,14 +1,15 @@
 <script>
 // @ts-nocheck
-import {createEventDispatcher} from 'svelte'
+
 import InfiniteScroll from "svelte-infinite-scroll";
 import {FileStore, FileViewStore, FilePageStore, Error} from '../js/store'
 import File from "./File.svelte";
 import ErrorBox from "./ErrorBox.svelte";
+import {createEventDispatcher} from 'svelte'
+//const dispatch = createEventDispatcher();
 
 export let isLoading = true;
 
-//const dispatch = createEventDispatcher();
 
 let size = 20;
 

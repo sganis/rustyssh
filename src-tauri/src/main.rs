@@ -220,6 +220,37 @@ async fn get_files(path: String, hidden: bool, app: State<'_,App>)
     Ok(serde_json::to_string(&result).unwrap())
 }
 
+#[tauri::command]
+async fn get_folders(path: String, hidden: bool, app: State<'_,App>) 
+-> Result<String, String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    let mut folders: Vec<String> = Vec::new();
+
+    let sftpfiles = match ssh.sftp_readdir(&path) {
+        Err(e) => return Err(e),
+        Ok(o) => o,
+    };
+
+    for (p, stat) in sftpfiles {
+        let path = String::from(p.to_string_lossy()).replace("\\","/");
+        let name = String::from(p.file_name().unwrap().to_string_lossy());
+        
+        if !stat.is_dir() {
+            continue;
+        }
+
+        if !hidden && name.starts_with(".") {
+            continue
+        }
+        
+        folders.push(path);
+    }     
+    folders.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
+    println!("{:?}", folders);
+    
+    Ok(serde_json::to_string(&folders).unwrap())
+}
+
 
 #[tauri::command]
 async fn get_page(path: String, page: i32, records_per_page: i32, app: State<'_,App>) -> Result<String, String> {
@@ -325,6 +356,7 @@ fn main() {
             setup_ssh,
             ssh_run,
             get_files,
+            get_folders,
             get_new_filename,
             get_page,
             save_file,

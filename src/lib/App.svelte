@@ -136,6 +136,11 @@ const goUp = async (e) => {
   $FileRequested = false;
   await getFiles(path);
 }
+const pathChanged = async (e) => {
+  const path = e.detail;
+  console.log('going to ', path)
+  await getFiles(path);
+}
 const download = async (e) => {
   isDownloading = true;
   const remotepath = e.detail;
@@ -255,7 +260,7 @@ const saveFile = async () => {
       <button class="btn btn-sm save" on:click={saveFile}>Save</button>
     {/if}
   </div>
-  <PathBar />
+  <PathBar on:path-changed={pathChanged}/>
   {#if $FileRequested}
     {#if isTextfile || isImage}
       <FilePage />
