@@ -260,8 +260,9 @@ const saveFile = async () => {
     {#if $JsonChanged}
       <button class="btn btn-sm save" on:click={saveFile}>Save</button>
     {/if}    
+    <PathBar value={$CurrentPath} on:path-changed={pathChanged}/>
   </div>
-  <PathBar value={$CurrentPath} on:path-changed={pathChanged}/>
+  
   {#if $FileRequested}
     {#if isTextfile || isImage}
       <FilePage />
@@ -289,20 +290,10 @@ const saveFile = async () => {
   margin-left: 15px;
   margin-top: 0px;
   margin-bottom: 5px;
-  margin-right: 15px;
+  margin-right: 5px;
   display: flex;
-  /* justify-content: space-between; */
-  /* align-items: center; */
-  /* gap: 10px; */
   padding-right: 10px;
   /* border: 1px solid red; */
-}
-.pathbar {
-  margin-left: 15px;
-  margin-top: 0px;
-  margin-bottom: 5px;
-  margin-right: 15px;
-  flex:1;
 }
 .save {
   padding: 0;

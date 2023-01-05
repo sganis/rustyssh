@@ -1,11 +1,9 @@
 <script>
-// @ts-nocheck
-
-    import { audioDir } from "@tauri-apps/api/path";
 
 // @ts-nocheck
 import { invoke } from "@tauri-apps/api/tauri"
-import AutoComplete from "simple-svelte-autocomplete"
+//import AutoComplete from "simple-svelte-autocomplete"
+import SimpleAutoComplete from "$lib/SimpleAutocomplete.svelte"
 import {createEventDispatcher} from 'svelte'
 const dispatch = createEventDispatcher();
 
@@ -38,19 +36,22 @@ async function getItems(keyword) {
 }
 
 function onChange(path) {
-    console.log('on change: ', path);
-    dispatch('path-changed', path);
-    return true;
+    //if ($CurrentPath !== path) {
+        console.log('on change: ', path);
+        //dispatch('path-changed', path);
+        return true;
+    //}
 }
 </script>
 
-<AutoComplete  
+<SimpleAutoComplete  
     cleanUserText={false}
     localFiltering={true}
     bind:selectedItem="{value}" 
     searchFunction="{getItems}"
     onChange={onChange}
     html5autocomplete={false}
+    
     delay="500" />
 
 
