@@ -177,6 +177,7 @@ const upload = async (e) => {
 }
 const fileClick = async (e) => {
     const file = e.detail;
+    $CurrentPath = file.path;
     if (file.is_dir) {
       await getFiles(file.path)
       $FileRequested = false;
@@ -255,12 +256,12 @@ const saveFile = async () => {
       <div class="progress-bar" style:width="{prog}%"/>
   {/if}
   </div>
-  <div class="path">{$CurrentPath}
+  <div class="path">
     {#if $JsonChanged}
       <button class="btn btn-sm save" on:click={saveFile}>Save</button>
-    {/if}
+    {/if}    
   </div>
-  <PathBar on:path-changed={pathChanged}/>
+  <PathBar value={$CurrentPath} on:path-changed={pathChanged}/>
   {#if $FileRequested}
     {#if isTextfile || isImage}
       <FilePage />
@@ -291,11 +292,18 @@ const saveFile = async () => {
   margin-right: 15px;
   display: flex;
   /* justify-content: space-between; */
-  align-items: stretch;
+  /* align-items: center; */
   /* gap: 10px; */
   padding-right: 10px;
+  /* border: 1px solid red; */
 }
-
+.pathbar {
+  margin-left: 15px;
+  margin-top: 0px;
+  margin-bottom: 5px;
+  margin-right: 15px;
+  flex:1;
+}
 .save {
   padding: 0;
   padding-left: 20px;

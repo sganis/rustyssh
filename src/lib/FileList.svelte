@@ -5,11 +5,16 @@ import InfiniteScroll from "svelte-infinite-scroll";
 import {FileStore, FileViewStore, FilePageStore, Error} from '../js/store'
 import File from "./File.svelte";
 import ErrorBox from "./ErrorBox.svelte";
-import {createEventDispatcher} from 'svelte'
-//const dispatch = createEventDispatcher();
+//import {createEventDispatcher} from 'svelte'
+
+// const dispatch = createEventDispatcher();
+
+// const fileClick = (file) => {
+//   console.log('file clicked', file.path);
+//   dispatch('file-click', file);
+// }
 
 export let isLoading = true;
-
 
 let size = 20;
 
@@ -30,8 +35,7 @@ $: {
 </script>
 <div class="scrollable border main">   
     {#each $FileViewStore as file}
-      <File {file} {isLoading} 
-        on:file-click on:file-delete on:file-rename/>
+      <File {file} {isLoading} on:file-click on:file-delete on:file-rename/>
     {/each}
     <InfiniteScroll 
       hasMore={$FileViewStore.length < $FileStore.length} 

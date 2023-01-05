@@ -1,13 +1,18 @@
 <script>
 // @ts-nocheck
+
+    import { audioDir } from "@tauri-apps/api/path";
+
+// @ts-nocheck
 import { invoke } from "@tauri-apps/api/tauri"
 import AutoComplete from "simple-svelte-autocomplete"
 import {createEventDispatcher} from 'svelte'
 const dispatch = createEventDispatcher();
 
-let selectedPath;
 let items = [];
 let hidden = true;
+let lastFolder = "";
+export let value;
 
 const getFolders = async (path) => {
     try {
@@ -20,14 +25,15 @@ const getFolders = async (path) => {
 }
 
 async function getItems(keyword) {
-    console.log('keyword: ', keyword);
-    let last = keyword[keyword.length-1];
-    console.log('last: ', last);
-
-    if (last === '/') {
-        console.log('getting items for ', keyword);
-        items = await getFolders(keyword);
-    } 
+    let index = keyword.lastIndexOf('/');
+    if (index == 0) 
+        index = 1;
+    let folder = keyword.substring(0,index);
+    if (folder !== lastFolder) {
+        console.log('getting items for ', folder);
+        items = await getFolders(folder);
+        lastFolder = folder;
+    }
     return items;
 }
 
@@ -39,20 +45,21 @@ function onChange(path) {
 </script>
 
 <AutoComplete  
-    className="pathbar"
     cleanUserText={false}
     localFiltering={true}
-    bind:selectedItem="{selectedPath}" 
+    bind:selectedItem="{value}" 
     searchFunction="{getItems}"
     onChange={onChange}
+    html5autocomplete={false}
     delay="500" />
 
 
 <style>
 .pathbar {
-  margin-left: 15px;
-  margin-top: 0px;
-  margin-bottom: 5px;
-  margin-right: 15px;
+    border: 1px solid green;
 }
+.autocomplete {
+    color: red;
+  }
+
 </style>

@@ -19,10 +19,12 @@ const fileClick = (file) => {
     $CurrentPath = file.path;
     dispatch('file-click', file);
 }
-const fileDelete = (file) => {
+const fileDelete = (e, file) => {
+    e.stopPropagation();
     dispatch('file-delete', file);
 }
-const fileRename = (file) => {
+const fileRename = (e, file) => {
+    e.stopPropagation();
     dispatch('file-rename', file);
 }
 
@@ -37,26 +39,28 @@ const filemodified = () => {
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if Object.keys(file).length > 0}
-<div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading}>
+<div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading} >
+   <div class="innerfile" on:click={()=>fileClick(file)}>
     <img class="icon" 
         src={file.is_dir && !file.is_link ? folderIcon 
             : file.is_dir && file.is_link ? folderLinkIcon
             : !file.is_dir && file.is_link ? fileLinkIcon 
             : fileIcon}
         alt="file icon" />
-    <span class="filename" on:click={() => fileClick(file)}> 
+    <span class="filename"> 
         {file.is_link ? `${file.name} => ${file.link_path}` : file.name}</span>
     <span class="filesize">{filesize()}</span>
     <span class="filemodified">{filemodified()}</span> 
+    </div>
     <span>
         <Dropdown>
             <DropdownToggle class="btn btn-light">
                 <i class="bi-three-dots"/></DropdownToggle>
           <DropdownMenu>
             <!-- <DropdownItem header>{file.name}</DropdownItem> -->
-            <DropdownItem on:click={()=> fileDelete(file)}>
+            <DropdownItem on:click={(e)=> fileDelete(e, file)}>
                 <i class="bi-trash rp10"/>Delete</DropdownItem>
-            <DropdownItem on:click={()=> fileRename(file)}>
+            <DropdownItem on:click={(e)=> fileRename(e, file)}>
                 <i class="bi-pencil rp10"/>Rename</DropdownItem>
                 
           </DropdownMenu>
@@ -72,13 +76,24 @@ const filemodified = () => {
     width: 22px;
     height: 22px;
 }
+.innerfile {
+    width: 100%;
+    height: 100%;
+    padding: 15px;
+    margin: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 20px;
+}
 .file {
     cursor: pointer;
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    gap: 20px;
-    padding: 10px;
+    padding: 0px;
+    padding-right: 10px;
+    margin: 0px;
     border-bottom: 1px solid gainsboro;  
 }
 .file:hover {
