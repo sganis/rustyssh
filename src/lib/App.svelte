@@ -132,13 +132,11 @@ const getPage = async (path, page, recordsPerPage) => {
 }
 const goUp = async (e) => {
   const path = getParent(e.detail);
-  console.log('going up to ', path)
   $FileRequested = false;
   await getFiles(path);
 }
 const pathChanged = async (e) => {
   const path = e.detail;
-  console.log('going to ', path)
   await getFiles(path);
 }
 const download = async (e) => {

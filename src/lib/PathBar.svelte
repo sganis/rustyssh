@@ -10,6 +10,8 @@ const dispatch = createEventDispatcher();
 let items = [];
 let hidden = true;
 let lastFolder = "";
+let editing = false;
+
 export let value;
 
 const getFolders = async (path) => {
@@ -36,8 +38,20 @@ async function getItems(keyword) {
 }
 
 function onChange(path) {
-    //if ($CurrentPath !== path) {
+    if (editing) {
         console.log('on change: ', path);
+        dispatch('path-changed', path);
+        editing = false;
+        return true;
+    }
+}
+function onFocus() {
+    console.log('on focus: ');
+    editing = true;
+}
+function onBlur(path) {
+    //if ($CurrentPath !== path) {
+        console.log('on blur: ');
         //dispatch('path-changed', path);
         return true;
     //}
@@ -51,6 +65,8 @@ function onChange(path) {
     searchFunction="{getItems}"
     onChange={onChange}
     html5autocomplete={false}
+    onFocus={onFocus}
+    onBlur={onBlur}
     
     delay="500" />
 
