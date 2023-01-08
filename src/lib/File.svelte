@@ -1,7 +1,8 @@
 <script>
 // @ts-nocheck
 
-import {createEventDispatcher} from 'svelte'
+
+import { scale } from 'svelte/transition';
 import {Dropdown, DropdownItem, DropdownMenu, DropdownToggle, } from 'sveltestrap';
 import folderIcon from "../assets/folder.png";
 import folderLinkIcon from "../assets/folder-link.png";
@@ -9,11 +10,17 @@ import fileIcon from "../assets/file.png";
 import fileLinkIcon from "../assets/file-link.png";
 import {CurrentPath} from '../js/store'
 import {humanFileSize} from '../js/util'
+import Rename from '$lib/Rename.svelte'
+
+import {createEventDispatcher} from 'svelte'
+const dispatch = createEventDispatcher();
 
 export let file = {};
 export let isLoading = false;
 
-const dispatch = createEventDispatcher();
+
+let deleteConfirm = false;
+let renameConfirm = false;
 
 const fileClick = (file) => {
     $CurrentPath = file.path;
@@ -21,10 +28,12 @@ const fileClick = (file) => {
 }
 const fileDelete = (e, file) => {
     e.stopPropagation();
+    deleteConfirm = false;
     dispatch('file-delete', file);
 }
 const fileRename = (e, file) => {
     e.stopPropagation();
+    renameConfirm = false;
     dispatch('file-rename', file);
 }
 
@@ -39,34 +48,44 @@ const filemodified = () => {
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if Object.keys(file).length > 0}
-<div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading} >
-   <div class="innerfile" on:click={()=>fileClick(file)}>
-    <img class="icon" 
-        src={file.is_dir && !file.is_link ? folderIcon 
-            : file.is_dir && file.is_link ? folderLinkIcon
-            : !file.is_dir && file.is_link ? fileLinkIcon 
-            : fileIcon}
-        alt="file icon" />
-    <span class="filename"> 
-        {file.is_link ? `${file.name} => ${file.link_path}` : file.name}</span>
-    <span class="filesize">{filesize()}</span>
-    <span class="filemodified">{filemodified()}</span> 
-    </div>
-    <span>
-        <Dropdown>
-            <DropdownToggle class="btn btn-light">
-                <i class="bi-three-dots"/></DropdownToggle>
-          <DropdownMenu>
-            <!-- <DropdownItem header>{file.name}</DropdownItem> -->
-            <DropdownItem on:click={(e)=> fileDelete(e, file)}>
-                <i class="bi-trash rp10"/>Delete</DropdownItem>
-            <DropdownItem on:click={(e)=> fileRename(e, file)}>
-                <i class="bi-pencil rp10"/>Rename</DropdownItem>
-                
-          </DropdownMenu>
-        </Dropdown>
-    </span>
-</div>
+    {#if renameConfirm}
+        <Rename {file} on:cancel-rename={()=>{renameConfirm=false;}}/>
+    {:else}
+        <div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading} >
+            <div class="innerfile" on:click={()=>fileClick(file)}>
+            <img class="icon" 
+                src={file.is_dir && !file.is_link ? folderIcon 
+                    : file.is_dir && file.is_link ? folderLinkIcon
+                    : !file.is_dir && file.is_link ? fileLinkIcon 
+                    : fileIcon}
+                alt="file icon" />
+            <span class="filename"> {file.is_link ? `${file.name} => ${file.link_path}` : file.name}</span>
+            {#if !deleteConfirm && !renameConfirm}
+            <span class="filesize">{filesize()}</span>
+            <span class="filemodified">{filemodified()}</span> 
+            {/if}
+            </div>
+            {#if deleteConfirm }
+            <div class="delete" in:scale="{{duration: 200}}">
+                <button class="btn btn-danger" on:click={(e)=>fileDelete(e,file)}>Delete</button>
+                <button class="btn btn-secondary" on:click={(e)=>{e.stopPropagation();deleteConfirm=false}}>Cancel</button>
+            </div>
+            {:else}
+            <div>
+                <Dropdown>
+                    <DropdownToggle class="btn btn-light">
+                        <i class="bi-three-dots"/></DropdownToggle>
+                <DropdownMenu>
+                    <DropdownItem on:click={(e)=> {e.stopPropagation(); deleteConfirm=true}}>
+                        <i class="bi-trash rp10"/>Delete</DropdownItem>
+                    <DropdownItem on:click={(e)=> {e.stopPropagation(); renameConfirm=true}}>
+                        <i class="bi-pencil rp10"/>Rename</DropdownItem>                
+                </DropdownMenu>
+                </Dropdown>
+            </div>
+            {/if}
+        </div>
+    {/if}
 {:else}
     <div class="empty"><p class="opaque"></p></div>
 {/if}
@@ -126,4 +145,13 @@ const filemodified = () => {
 .blur {
   filter: blur(1px);
 }
+.delete {
+    display: flex;
+    gap: 5px;
+}
+.btn {
+    width: 90px;
+    padding: 5px;
+}
+
 </style>
