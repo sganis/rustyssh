@@ -247,7 +247,7 @@ async fn get_folders(path: String, hidden: bool, app: State<'_,App>)
     }     
     folders.sort_by(|a, b| a.to_lowercase().cmp(&b.to_lowercase()));
     println!("{:?}", folders);
-    
+
     Ok(serde_json::to_string(&folders).unwrap())
 }
 
@@ -344,6 +344,29 @@ async fn delete(remotepath: String, app: State<'_,App>) -> Result<String, String
         },
     }
 }
+#[tauri::command]
+async fn rename(src: String, dst: String, app: State<'_,App>) -> Result<String, String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    match ssh.sftp_rename(&src, &dst) {
+        Err(e) => Err(e),
+        Ok(o) => {
+            println!("Renamed: {src} -> {dst}");
+            Ok(serde_json::to_string(&o).unwrap())
+        },
+    }
+}
+#[tauri::command]
+async fn duplicate(path: String, app: State<'_,App>) -> Result<(), String> {
+    let mut ssh = app.ssh.lock().unwrap();
+    // match ssh.sftp_rename(&src, &dst) {
+    //     Err(e) => Err(e),
+    //     Ok(o) => {
+    //         println!("Renamed: {src} -> {dst}");
+    //         Ok(serde_json::to_string(&o).unwrap())
+    //     },
+    // }
+    Ok(())
+}
 fn main() {
     tauri::Builder::default()
         .manage(App {..Default::default() })
@@ -365,7 +388,8 @@ fn main() {
             mkdir,
             rmdir,
             delete,
-            
+            rename,  
+            duplicate,          
         ])
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .run(tauri::generate_context!())

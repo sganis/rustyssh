@@ -35,7 +35,8 @@ $: {
 </script>
 <div class="scrollable border main">   
     {#each $FileViewStore as file}
-      <File {file} {isLoading} on:file-click on:file-delete on:file-rename/>
+      <File {file} {isLoading} 
+        on:file-click on:file-delete on:file-rename on:file-duplicate/>
     {/each}
     <InfiniteScroll 
       hasMore={$FileViewStore.length < $FileStore.length} 

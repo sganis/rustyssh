@@ -218,10 +218,22 @@ const fileDelete = async (e) => {
     }
 }
 const fileRename = async (e) => {
-    const file = e.detail;
-    console.log('renaming '+file.path)
+    const [file, newName] = e.detail;
     try {
-      await invoke("rename", { remotepath:file.path });
+      let src = file.path;
+      let dst = `${$CurrentPath}/${newName}`;
+      console.log('renaming '+src + ' to '+dst)
+    
+      await invoke("rename", { src, dst });
+      await getFiles($CurrentPath);
+    } catch (ex) {
+      console.log(ex)
+    }
+}
+const fileDuplicate = async (e) => {
+    const file = e.detail;
+    try {
+      await invoke("duplicate", { path : file.path });
       await getFiles($CurrentPath);
     } catch (ex) {
       console.log(ex)
@@ -248,7 +260,8 @@ const saveFile = async () => {
     on:download={download} 
     on:upload={upload} 
     on:show-hidden={hiddenToggled}
-    on:new-folder={()=> showNewFolderModal=true}/>
+    on:new-folder={()=> showNewFolderModal=true}
+    on:file-duplicate={fileDuplicate}/>
   <div class="progress progress-wrap">
   {#if $Progress > 0 && $Progress < 1.0 }
       <div class="progress-bar" style:width="{prog}%"/>

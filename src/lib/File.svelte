@@ -18,9 +18,13 @@ const dispatch = createEventDispatcher();
 export let file = {};
 export let isLoading = false;
 
-
 let deleteConfirm = false;
 let renameConfirm = false;
+
+$: icon = file.is_dir && !file.is_link ? folderIcon 
+            : file.is_dir && file.is_link ? folderLinkIcon
+            : !file.is_dir && file.is_link ? fileLinkIcon 
+            : fileIcon
 
 const fileClick = (file) => {
     $CurrentPath = file.path;
@@ -31,11 +35,6 @@ const fileDelete = (e, file) => {
     deleteConfirm = false;
     dispatch('file-delete', file);
 }
-const fileRename = (e, file) => {
-    e.stopPropagation();
-    renameConfirm = false;
-    dispatch('file-rename', file);
-}
 
 const filesize = () => {
     return file.is_dir ? "" : humanFileSize(file.size, true);
@@ -44,20 +43,24 @@ const filemodified = () => {
     return file.modified===0 ? "" : file.modified;
 }
 
+const duplicate = (file) => {
+    dispatch('file-duplicate', file);
+}
+
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 {#if Object.keys(file).length > 0}
     {#if renameConfirm}
-        <Rename {file} on:cancel-rename={()=>{renameConfirm=false;}}/>
+        <Rename {file} {icon} 
+            on:cancel-rename={()=>{renameConfirm=false;}}
+            on:file-rename
+            />
     {:else}
         <div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading} >
             <div class="innerfile" on:click={()=>fileClick(file)}>
             <img class="icon" 
-                src={file.is_dir && !file.is_link ? folderIcon 
-                    : file.is_dir && file.is_link ? folderLinkIcon
-                    : !file.is_dir && file.is_link ? fileLinkIcon 
-                    : fileIcon}
+                src={icon}
                 alt="file icon" />
             <span class="filename"> {file.is_link ? `${file.name} => ${file.link_path}` : file.name}</span>
             {#if !deleteConfirm && !renameConfirm}
@@ -78,9 +81,11 @@ const filemodified = () => {
                 <DropdownMenu>
                     <DropdownItem on:click={(e)=> {e.stopPropagation(); deleteConfirm=true}}>
                         <i class="bi-trash rp10"/>Delete</DropdownItem>
-                    <DropdownItem on:click={(e)=> {e.stopPropagation(); renameConfirm=true}}>
-                        <i class="bi-pencil rp10"/>Rename</DropdownItem>                
-                </DropdownMenu>
+                        <DropdownItem on:click={(e)=> {e.stopPropagation(); renameConfirm=true}}>
+                            <i class="bi-pencil rp10"/>Rename</DropdownItem>                
+                        <DropdownItem on:click={()=> duplicate(file)}>
+                            <i class="bi-bookmarks rp10"/>Duplicate</DropdownItem>                
+                        </DropdownMenu>
                 </Dropdown>
             </div>
             {/if}

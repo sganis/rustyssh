@@ -365,6 +365,15 @@ impl Ssh {
         };
         Ok(f)
     }
+    pub fn sftp_rename(&mut self, src: &str, dst: &str) -> Result<(), String> {
+        let s = Path::new(src);
+        let d = Path::new(dst);
+        let sftp = self.sftp.as_ref().unwrap();
+        if let Err(e) = sftp.rename(&s, &d, None) {
+            return Err(format!("Cannot rename {src}: {e}"));
+        }
+        Ok(())
+    }
     pub fn sftp_delete(&mut self, filename: &str) -> Result<(), String> {
         println!("deleting {filename}");
         
