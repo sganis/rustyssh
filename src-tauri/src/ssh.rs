@@ -461,7 +461,7 @@ mod tests {
     fn get_params() -> (String, String, String) {
         let host = env::var("TEST_SSH_HOST").unwrap();
         let user = env::var("TEST_SSH_USER").unwrap();
-        let pass = env::var("TEST_SSH_USER").unwrap();
+        let pass = env::var("TEST_SSH_PASS").unwrap();
         assert!(host.len()>0);
         assert!(user.len()>0);
         assert!(pass.len()>0);
@@ -607,5 +607,21 @@ mod tests {
         // for f in files  {
         //     println!("{:?}", f);
         // }
+    }
+    #[test]
+    fn rename() {
+        let mut ssh = Ssh::new();
+        let (host, user, pass) = get_params();
+        let r = ssh.connect_with_password(&host, PORT, &user, &pass);
+        assert!(r.is_ok());
+        assert!(ssh.sftp_stat( "/home/support").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file").is_err());
+        assert!(ssh.sftp_create("/home/support/file").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file").is_ok());
+        assert!(ssh.sftp_rename("/home/support/file","/home/support/file1").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file").is_err());
+        assert!(ssh.sftp_stat( "/home/support/file1").is_ok());
+        assert!(ssh.sftp_delete( "/home/support/file1").is_ok());
+        assert!(ssh.sftp_stat( "/home/support/file1").is_err());
     }
 }

@@ -45,8 +45,7 @@ const fileRename = (file) => {
                 on:focus="{e => e.target.select()}" 
                 use:init 
                 spellcheck="false"
-                disabled={isRenaming}
-                />
+                disabled={isRenaming} />
             <div class="rename-btn" in:scale="{{duration: 200}}">
                 <button type="submit" class="btn btn-success" disabled={isRenaming}>Rename</button>
                 <button type="cancel" class="btn btn-secondary" on:click={cancelRename} disabled={isRenaming}>Cancel</button>
