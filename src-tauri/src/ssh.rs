@@ -26,6 +26,8 @@ impl Ssh {
     pub fn new() -> Self {
         Self { ..Default::default() }
     }
+
+    
     pub fn supported_algs() -> String {
         let ssh = Session::new().unwrap();
         println!("hostKey: {:?}", ssh.supported_algs(ssh2::MethodType::HostKey).unwrap());

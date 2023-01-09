@@ -45,7 +45,6 @@ fn read_settings() -> Result<Settings, String> {
 fn write_settings(settings: Settings) -> Result<(), String> {
     settings::write_settings(settings)
 }
-
 #[tauri::command]
 fn connect_with_password(settings: Settings, app: State<'_,App>) -> Result<(), String> {
     let mut _ssh = ssh::Ssh::new();

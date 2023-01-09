@@ -250,6 +250,15 @@ const saveFile = async () => {
   }
   $JsonChanged = false;
 }
+const xterm = async () => {
+  try {
+    const r = await invoke("ssh_run", { command: "export DISPLAY=localhost:0;xterm &" });
+  } catch (e) {
+    console.log(e)
+  }
+}
+
+
 </script>
 
 
@@ -261,7 +270,9 @@ const saveFile = async () => {
     on:upload={upload} 
     on:show-hidden={hiddenToggled}
     on:new-folder={()=> showNewFolderModal=true}
-    on:file-duplicate={fileDuplicate}/>
+    on:file-duplicate={fileDuplicate}
+    on:xterm={xterm}
+    />
   <div class="progress progress-wrap">
   {#if $Progress > 0 && $Progress < 1.0 }
       <div class="progress-bar" style:width="{prog}%"/>

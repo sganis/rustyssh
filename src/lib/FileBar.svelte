@@ -32,6 +32,9 @@ const newFolderClick = () => {
 const hiddenChanged = () => {
     dispatch('show-hidden', hidden);
 }
+const xtermClick = () => {
+    dispatch('xterm');
+}
 </script>
 
 <div class="search">
@@ -46,6 +49,9 @@ const hiddenChanged = () => {
     <button class="btn btn-light border" 
         on:click={uploadClick} disabled={$FileRequested || isUploading}>
         <i class="bi-upload rp10"></i>Upload</button>
+    <button class="btn btn-light border" 
+        on:click={xtermClick}>
+        <i class="bi-terminal"></i></button>
     
     <Dropdown>
         <DropdownToggle class="btn btn-light border">
