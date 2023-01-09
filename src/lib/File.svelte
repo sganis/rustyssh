@@ -8,6 +8,7 @@ import folderIcon from "../assets/folder.png";
 import folderLinkIcon from "../assets/folder-link.png";
 import fileIcon from "../assets/file.png";
 import fileLinkIcon from "../assets/file-link.png";
+import deleteIcon from "../assets/delete.png";
 import {CurrentPath} from '../js/store'
 import {humanFileSize} from '../js/util'
 import Rename from '$lib/Rename.svelte'
@@ -20,8 +21,7 @@ export let isLoading = false;
 
 let deleteConfirm = false;
 let renameConfirm = false;
-
-$: icon = file.is_dir && !file.is_link ? folderIcon 
+let icon = file.is_dir && !file.is_link ? folderIcon 
             : file.is_dir && file.is_link ? folderLinkIcon
             : !file.is_dir && file.is_link ? fileLinkIcon 
             : fileIcon
@@ -59,9 +59,11 @@ const duplicate = (file) => {
     {:else}
         <div class="file" class:selected={$CurrentPath===file.path} class:blur={isLoading} >
             <div class="innerfile" on:click={()=>fileClick(file)}>
-            <img class="icon" 
-                src={icon}
-                alt="file icon" />
+            {#if deleteConfirm }
+            <img class="icon" src={deleteIcon}  alt="file icon" />
+            {:else}
+            <img class="icon" src={icon}  alt="file icon" />
+            {/if}
             <span class="filename"> {file.is_link ? `${file.name} => ${file.link_path}` : file.name}</span>
             {#if !deleteConfirm && !renameConfirm}
             <span class="filesize">{filesize()}</span>
